@@ -78,6 +78,10 @@ input::placeholder{color:var(--muted);opacity:.7}
 .disc-b .shock{stroke:var(--blue);stroke-width:3.5;stroke-linecap:round}
 .disc-b .bag{fill:var(--blue);opacity:.85}
 @media (max-width:520px){.disc-b small{display:none}.disc-b svg{width:60px;height:37px}.disc-b b{font-size:12px}}
+.btn.big{display:block;width:100%;padding:16px 20px;font-size:17px;border-radius:16px}
+#crea{text-align:center}
+#savebar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:640px;margin:0 auto;padding:10px 10px 10px 18px;border-radius:999px;background:var(--panel);border:1px solid var(--line);box-shadow:0 10px 30px rgba(16,24,40,.25);font-weight:700;font-size:14px}
+#savebar[hidden]{display:none}
 .seg{display:flex;gap:4px;padding:4px;background:var(--panel2);border:1px solid var(--line);border-radius:999px;margin-bottom:16px}
 .seg .btn{flex:1;border-radius:999px}
 .seg .ghost{background:transparent;border:0;color:var(--muted)}
@@ -305,9 +309,9 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.17 · 26/11/2026)</p>
+<p class="ver" id="ver">(versione 1.18 · 26/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
-<div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Applica</b>. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
+<div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
 <p class="muted h-ev plan">Evento: <b id="h-nome">—</b> · <span id="h-data">—</span> · <span id="h-km">—</span> km · <span id="h-dplus">—</span> m D+ · durata stimata <span id="h-dur">—</span> · piano dal <span class="h-ini">—</span> al <span class="h-fine">—</span> · mancano <b id="h-giorni">—</b> giorni</p>
 <p class="muted h-gen plan" hidden>Obiettivo generico: <b id="h-obj">—</b> · ciclo di <span id="h-ng">—</span> settimane dal <span class="h-ini">—</span> al <span class="h-fine">—</span> · lunghi fino a <span id="h-kmg">—</span> · terreno <span id="h-ter">—</span></p>
@@ -350,14 +354,11 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <label class="field wide"><span>Livello</span><select id="livello"><option value="">— scegli —</option><option value="principiante">Principiante (meno di 2 anni di allenamento strutturato)</option><option value="esperto">Esperto (allenamento strutturato da 2 anni o più)</option></select></label>
 </div>
 <div class="form">
-<button type="button" class="btn" id="save-obj">Applica</button>
 <button type="button" class="btn ghost f-gen" id="restart" hidden>Ricomincia il ciclo da questa settimana</button>
 <button type="button" class="btn ghost danger" id="reset-all">Azzera tutte le scelte</button>
 </div>
 <p class="plan">Profilo: <b id="p-tipo">—</b>, terreno <b id="p-terr">—</b> (<span id="p-mpk">—</span> m di salita per km) · disciplina <b id="p-disc">—</b> · livello <b id="p-liv">—</b> · <span id="p-gg">—</span> giorni e <span id="p-ore">—</span> h a settimana · lungo il <b id="p-lday">—</b></p>
 <p id="p-enf" class="plan">—</p>
-<p class="ok muted msg" id="ok-obj" hidden>Applicato: piano, date, lunghi e sedute ricalcolati.</p>
-<p class="bad msg-bad" hidden>Non salvato: controlla i valori e riprova.</p>
 <p class="muted">L’inizio scatta sempre al lunedì della settimana scelta. Per un evento la durata va dall’inizio alla gara (da 6 a 52 settimane); per l’obiettivo generico la scegli tu: sotto le 16 settimane taglio la Base, sopra aggiungo preparazione generale. Cambiare la data di inizio crea un registro nuovo; cambiare km, dislivello, ore o durata no.</p>
 </section>
 
@@ -366,14 +367,12 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="form">
 <label class="field"><span>FTP fuori (W)</span><input id="ftpout" type="number" placeholder="es. 250" min="100" max="500" step="1"></label>
 <label class="field"><span>FTP rulli (W)</span><input id="ftpin" type="number" placeholder="es. 235" min="100" max="500" step="1"></label>
-<button type="button" class="btn" id="save-imp">Salva</button>
 </div>
 <p class="muted">Ti basta inserirne uno: l’altro si stima da solo, considerando l’FTP sui rulli circa il 5% più basso di quello all’aperto. Se hai fatto il test in entrambi i modi, inserisci tutti e due.</p>
 <p class="muted" id="ftp-auto" hidden></p>
 <label class="check"><input type="checkbox" id="ftp-recente"> Il mio FTP è stato misurato nelle ultime 4 settimane</label>
 <p class="muted">Se non è spuntato, il piano parte con un test FTP nella prima settimana. In ogni caso i test si ripetono circa ogni 4–8 settimane, nelle settimane di scarico.</p>
 <p class="muted plan">In uso: <span id="f-out">—</span> W fuori, <span id="f-in">—</span> W sui rulli. Dopo ogni test FTP cambia questi numeri: tutti i watt del piano e delle zone si ricalcolano.</p>
-<p class="ok muted msg" id="ok-imp" hidden>Salvato.</p>
 </section>
 
 <section class="card" id="atleta">
@@ -384,7 +383,7 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <label class="field"><span>Altezza (cm)</span><input id="altezza" type="number" min="130" max="215" step="1" placeholder="es. 178"></label>
 <label class="field"><span>Peso (kg)</span><input id="peso" type="number" min="35" max="150" step="0.5" placeholder="es. 73"></label>
 </div>
-<p class="muted">Servono per il rapporto watt/kg, la stima del tempo di gara, la frequenza cardiaca, l’alimentazione e i recuperi in base all’età. Restano salvati solo in questo browser. Si salvano con “Applica” in Programma e obiettivo o con “Salva” nella sezione FTP.</p>
+<p class="muted">Servono per il rapporto watt/kg, la stima del tempo di gara, la frequenza cardiaca, l’alimentazione e i recuperi in base all’età. Restano salvati solo in questo browser. Si salvano con «Crea il piano» o «Aggiorna il piano», in fondo ai dati.</p>
 <div class="req-out plan" id="atl-out">
 <div class="lbl">Il tuo profilo</div>
 <ul id="atl-list"></ul>
@@ -410,6 +409,14 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="form" style="margin-top:10px"><button type="button" class="btn ghost" id="save-att">Salva attrezzatura</button></div>
 <p class="ok muted msg" id="ok-att" hidden>Attrezzatura salvata: esercizi aggiornati.</p>
 </section>
+
+<section class="card" id="crea">
+<button type="button" class="btn big" id="save-obj">Crea il piano</button>
+<p class="ok muted msg" id="ok-obj" hidden>Piano aggiornato: date, lunghi e sedute ricalcolati.</p>
+<p class="bad msg-bad" hidden>Non salvato: controlla i valori e riprova.</p>
+<p class="muted" style="margin:8px 0 0">Controlla programma, FTP, dati dell’atleta e forza in palestra: il piano si costruisce con tutti questi dati.</p>
+</section>
+<div id="savebar" hidden><span>Dati modificati</span><button type="button" class="btn" id="save-bar">Aggiorna il piano</button></div>
 
 <section class="card" id="richieste">
 <h2>Richieste e commenti per Claude</h2>
@@ -630,7 +637,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.17 · 26/11/2026';
+const APP_VER = '1.18 · 26/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -1347,7 +1354,7 @@ function renderTables() {
   const s = document.createElement('span'); const i = document.createElement('i'); i.className = 'dot'; s.appendChild(i); s.appendChild(document.createTextNode('Fatto')); lg.appendChild(s);
 }
 
-function render() { compute(); document.querySelectorAll('.plan').forEach((e) => { if (!S.configured) e.hidden = true; else if (!e.classList.contains('h-ev') && !e.classList.contains('h-gen') && e.id !== 'sez-forza') e.hidden = false; }); $('welcome').hidden = S.configured; if (!S.configured) return; renderHeader(); renderChart(); renderWeek(); renderTables(); }
+function render() { compute(); if (typeof creaLbl === 'function') creaLbl(); document.querySelectorAll('.plan').forEach((e) => { if (!S.configured) e.hidden = true; else if (!e.classList.contains('h-ev') && !e.classList.contains('h-gen') && e.id !== 'sez-forza') e.hidden = false; }); $('welcome').hidden = S.configured; if (!S.configured) return; renderHeader(); renderChart(); renderWeek(); renderTables(); }
 function select(id) { sel = id; renderChart(); renderWeek(); renderTables(); fillLog(); $('ok-log').hidden = true; }
 
 function flag(id, ok) {
@@ -1371,7 +1378,7 @@ function previewDur(quiet) {
     else if (nG < 6) msg.push('Meno di 6 settimane fino all’evento: il piano parte dal blocco specifico.');
     else if (nG > 52) msg.push(`L’evento è tra ${nG} settimane, ma il piano dura al massimo 52 e finirebbe prima della gara: sposta l’inizio al ${it(iso(lun(Date.parse(dv)) - 51 * 7 * DAY))} o dopo.`);
   }
-  if (!quiet) msg.push(S.configured ? 'Premi «Applica» per aggiornare il piano.' : 'Il piano si crea quando premi «Applica».');
+  if (!quiet) msg.push(S.configured ? 'Premi «Aggiorna il piano» per applicare la modifica.' : 'Il piano si crea con «Crea il piano», in fondo ai dati.');
   hint.hidden = !msg.length; hint.textContent = msg.join(' ');
 }
 ['data', 'inizio', 'durata'].forEach((id) => { $(id).addEventListener('input', () => previewDur()); $(id).addEventListener('change', () => previewDur()); });
@@ -1413,16 +1420,25 @@ function saveAll(okId, over) {
     document.querySelectorAll('.msg-bad').forEach((m2) => { m2.textContent = txt; });
     const first = $(errs[0][0]); if (first && first.scrollIntoView) { first.scrollIntoView({behavior: 'smooth', block: 'center'}); try { first.focus({preventScroll: true}); } catch (e) {} }
   }
-  if (ok) { memory.imp = d; persist(); sel = null; render(); fillForms(); fillLog(); }
+  const first0 = !S.configured;
+  if (ok) { memory.imp = d; persist(); sel = null; render(); fillForms(); fillLog(); setDirty(false); }
   flag(okId, ok);
+  if (ok && first0 && $('settimana')) setTimeout(() => $('settimana').scrollIntoView({behavior: 'smooth', block: 'start'}), 150);
 }
+let dirty = false;
+function creaLbl() { const t = S.configured ? 'Aggiorna il piano' : 'Crea il piano'; $('save-obj').textContent = t; }
+let creaVisible = false;
+function setDirty(v) { dirty = v; $('savebar').hidden = !(dirty && S.configured && !creaVisible); }
+['obiettivo', 'imp', 'atleta'].forEach((id) => { const sec = $(id); if (!sec) return; ['input', 'change'].forEach((ev) => sec.addEventListener(ev, (e) => { if (e.target && e.target.closest('#backup')) return; if (S.configured) setDirty(true); })); });
+['mod-ev', 'mod-gen'].forEach((id) => $(id).addEventListener('click', () => { if (S.configured) setDirty(true); }));
+if ('IntersectionObserver' in window) new IntersectionObserver((en) => { creaVisible = en.some((x) => x.isIntersecting); setDirty(dirty); }).observe($('crea'));
+$('save-bar').addEventListener('click', () => { saveAll('ok-obj'); if (!dirty) { const bar = $('savebar'), sp = bar.querySelector('span'), bt = $('save-bar'); sp.textContent = 'Piano aggiornato ✓'; bt.hidden = true; bar.hidden = false; setTimeout(() => { sp.textContent = 'Dati modificati'; bt.hidden = false; setDirty(dirty); }, 1600); } });
 
 document.addEventListener('input', (ev) => { const t = ev.target; if (t && t.classList && t.classList.contains('err')) { t.classList.remove('err'); if (t.closest('.hours')) document.querySelectorAll('.hours select').forEach((e) => e.classList.remove('err')); } });
 document.addEventListener('change', (ev) => { const t = ev.target; if (t && t.classList) { t.classList.remove('err'); if (t.closest && t.closest('.hours')) document.querySelectorAll('.hours select').forEach((e) => e.classList.remove('err')); } });
 $('mod-ev').addEventListener('click', () => setMode('evento'));
 $('mod-gen').addEventListener('click', () => setMode('generico'));
 $('save-obj').addEventListener('click', () => saveAll('ok-obj'));
-$('save-imp').addEventListener('click', () => saveAll('ok-imp'));
 $('reset-all').addEventListener('click', () => {
   if (!window.confirm('Azzerare tutte le scelte? Si cancellano impostazioni, FTP, ore per giorno e il registro delle settimane salvato in questo browser.')) return;
   memory = {imp: {}, reg: {}, mod: {}}; persist(); pendingForza = true; modo = 'evento'; disc = null; sel = null;
