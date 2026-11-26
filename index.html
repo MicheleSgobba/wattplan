@@ -309,7 +309,7 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.18 · 26/11/2026)</p>
+<p class="ver" id="ver">(versione 1.19 · 26/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -418,21 +418,6 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 </section>
 <div id="savebar" hidden><span>Dati modificati</span><button type="button" class="btn" id="save-bar">Aggiorna il piano</button></div>
 
-<section class="card" id="richieste">
-<h2>Richieste e commenti per Claude</h2>
-<p class="muted">Scrivi cosa vuoi cambiare rispetto al piano: un fastidio da rispettare, un esercizio che non puoi fare, un attrezzo in più o in meno, preferenze sulle sedute. Claude adatta gli esercizi di forza e aggiunge note alle sedute, senza cambiare la struttura del piano.</p>
-<label class="field" style="margin-top:8px"><span>La tua richiesta</span><textarea id="req-text" rows="4" maxlength="1200" placeholder="Es. ho un fastidio al ginocchio destro, niente affondi; ho solo manubri fino a 20 kg; il giovedì preferisco uscire all’aperto"></textarea></label>
-<div class="form" style="margin-top:12px"><button type="button" class="btn" id="req-btn">Adatta con Claude</button><button type="button" class="btn ghost" id="req-stop" hidden>Ferma</button><button type="button" class="btn ghost danger" id="req-clear" hidden>Rimuovi le personalizzazioni</button></div>
-<div id="req-off" hidden><p class="muted">L’adattamento automatico con Claude non è attivo su questa pagina. Puoi copiare la richiesta, con i dati del tuo piano, e incollarla in una chat con Claude o mandarla a chi ti ha condiviso il piano.</p><div class="form" style="margin-top:8px"><button type="button" class="btn ghost" id="req-copy">Copia la richiesta</button></div></div>
-<p class="muted" id="req-status" hidden></p>
-<div class="req-out" id="req-out" hidden>
-<div class="lbl">Cosa è cambiato</div><p id="req-sintesi"></p>
-<div id="req-avvisi-box" hidden><div class="lbl">Attenzione</div><ul id="req-avvisi"></ul></div>
-<div id="req-note-box" hidden><div class="lbl">Note aggiunte alle sedute</div><ul id="req-note"></ul></div>
-<div id="req-forza-box" hidden><div class="lbl">Esercizi di forza modificati</div><ul id="req-forza"></ul></div>
-<p class="muted" id="req-quando"></p>
-</div>
-</section>
 
 <section class="kpi plan">
 <div class="card"><div class="muted">Ore totali di piano</div><div class="big" id="k-ore">—</div><div class="muted">bici + forza, tutto il piano</div></div>
@@ -628,7 +613,7 @@ function forzaEff() {
   const imp = memory.imp || {};
   const E = new Set(Array.isArray(imp.attrezzi) ? imp.attrezzi : ATT_DEF);
   let rows = FORZA.map((a) => [a[0], a[1], adaptEx(a[2], E), a[3]]);
-  const ov = (imp.custom && Array.isArray(imp.custom.forza)) ? imp.custom.forza : [];
+  const ov = [];
   ov.forEach((o) => { const b = String(o.blocco || '').toLowerCase().slice(0, 6); rows = rows.map((a) => (b && a[0].toLowerCase().startsWith(b) && a[1] === String(o.sessione)) ? [a[0], a[1], String(o.esercizi || a[2]).slice(0, 500), a[3]] : a); });
   return rows;
 }
@@ -637,7 +622,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.18 · 26/11/2026';
+const APP_VER = '1.19 · 26/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -1532,7 +1517,7 @@ function longProf(raw, h) {
   return out;
 }
 function noteFor(d, raw) {
-  const c = memory.imp.custom; if (!c || !Array.isArray(c.note)) return [];
+  return [];
   const slot = S.p.slotOf[d]; if (!slot || /^Riposo/.test(raw)) return [];
   const tipo = /^Forza/.test(raw) ? 'forza' : slot === 'sab' ? 'lungo' : (slot === 'mar' || slot === 'gio') ? 'qualita' : 'z2';
   return c.note.filter((n) => n && (n.tipo === tipo || n.tipo === 'tutte')).map((n) => String(n.nota || '').slice(0, 300)).filter(Boolean);
@@ -1663,77 +1648,7 @@ $('pdf-btn').addEventListener('click', () => {
   window.addEventListener('afterprint', done);
   setTimeout(() => window.print(), 50);
 });
-function renderCustom() {
-  const c = memory.imp.custom; const has = !!(c && (c.sintesi || (c.note && c.note.length) || (c.forza && c.forza.length)));
-  $('req-out').hidden = !has; $('req-clear').hidden = !has;
-  if (!has) return;
-  if (c.richiesta && !$('req-text').value) $('req-text').value = c.richiesta;
-  $('req-sintesi').textContent = c.sintesi || '';
-  const fillUl = (id, box, items) => { const ul = $(id); ul.replaceChildren(); items.forEach((t) => { const li = document.createElement('li'); li.textContent = t; ul.appendChild(li); }); $(box).hidden = !items.length; };
-  const TN = {qualita: 'Sedute di qualità', z2: 'Z2 e recupero', lungo: 'Lungo', forza: 'Forza', tutte: 'Tutte le sedute'};
-  fillUl('req-avvisi', 'req-avvisi-box', (c.avvisi || []).map(String));
-  fillUl('req-note', 'req-note-box', (c.note || []).map((n) => `${TN[n.tipo] || 'Sedute'}: ${n.nota}`));
-  fillUl('req-forza', 'req-forza-box', (c.forza || []).map((o) => `${o.blocco} ${o.sessione}: ${o.esercizi}`));
-  $('req-quando').textContent = c.quando ? 'Aggiornato il ' + c.quando : '';
-}
-let SAMPLE = null, reqCtl = null;
-function reqStatus(t) { const e = $('req-status'); e.hidden = !t; e.textContent = t || ''; }
-async function askClaude() {
-  const testo = $('req-text').value.trim().slice(0, 1200);
-  if (!testo) { reqStatus('Scrivi prima cosa vuoi cambiare.'); return; }
-  if (!SAMPLE) { reqStatus('Funzione non disponibile in questa visualizzazione.'); return; }
-  const p = S.configured ? S.p : null;
-  const att = Array.isArray(memory.imp.attrezzi) ? memory.imp.attrezzi : ATT_DEF;
-  const ctx = {
-    livello: p ? p.livello : 'non impostato', obiettivo: p ? (p.modalita === 'evento' ? `${p.nome_evento}, ${p.km} km, ${p.dplus} m D+` : p.obiettivo_txt) : 'non impostato',
-    ore_per_giorno: p ? p.og : null, forza_inclusa: p ? p.forza : true, attrezzi: att,
-    esercizi_forza_attuali: FORZA.map((a) => ({blocco: a[0].split(' (')[0], sessione: a[1], esercizi: adaptEx(a[2], new Set(att))}))
-  };
-  const prompt = `Sei un preparatore di ciclismo. Un atleta segue un piano gravel già strutturato (fasi, sedute ai rulli in % FTP, lunghi, forza). NON puoi cambiare la struttura del piano, le fasi o i carichi settimanali. Puoi solo: (1) riscrivere gli esercizi delle sedute di forza esistenti per rispettare la richiesta e l’attrezzatura; (2) aggiungere brevi note pratiche a tipi di seduta; (3) segnalare avvisi di sicurezza (per dolori o problemi di salute consiglia di sentire un medico o fisioterapista e scegli varianti prudenti).
-
-Contesto del piano (JSON): ${JSON.stringify(ctx)}
-
-Richiesta dell’atleta: «${testo}»
-
-Rispondi SOLO con un oggetto JSON in italiano, senza altro testo, con questa forma:
-{"sintesi": "2-3 frasi su cosa hai cambiato e perché", "avvisi": ["..."], "note": [{"tipo": "qualita|z2|lungo|forza|tutte", "nota": "max 200 caratteri"}], "forza": [{"blocco": "Adattamento|Forza massima|Mantenimento e potenza|Settimane di scarico", "sessione": "A|B|C|Leggera", "esercizi": "esercizi separati da ' · ' con serie×ripetizioni"}]}
-Includi in "forza" solo le sedute che cambi. Usa al massimo 6 note. Se la richiesta non riguarda niente che puoi cambiare, spiegalo nella sintesi e lascia vuoti gli altri campi.`;
-  $('req-btn').disabled = true; $('req-stop').hidden = false; reqStatus('Sto adattando il piano… può volerci fino a un minuto.');
-  reqCtl = new AbortController();
-  try {
-    const out = await SAMPLE.json(prompt, {signal: reqCtl.signal});
-    if (!out || typeof out !== 'object') throw {code: 'invalid_json'};
-    const okT = ['qualita', 'z2', 'lungo', 'forza', 'tutte'];
-    const custom = {
-      richiesta: testo,
-      sintesi: String(out.sintesi || '').slice(0, 600),
-      avvisi: (Array.isArray(out.avvisi) ? out.avvisi : []).slice(0, 5).map((x) => String(x).slice(0, 300)),
-      note: (Array.isArray(out.note) ? out.note : []).slice(0, 6).filter((n) => n && okT.includes(n.tipo)).map((n) => ({tipo: n.tipo, nota: String(n.nota || '').slice(0, 300)})),
-      forza: (Array.isArray(out.forza) ? out.forza : []).slice(0, 8).filter((o) => o && o.blocco && o.sessione && o.esercizi).map((o) => ({blocco: String(o.blocco).slice(0, 40), sessione: String(o.sessione).slice(0, 10), esercizi: String(o.esercizi).slice(0, 500)})),
-      quando: new Date().toLocaleDateString('it-IT')
-    };
-    memory.imp.custom = custom; persist(); render(); fillLog(); renderCustom(); reqStatus('');
-  } catch (e) {
-    const c = e && e.code;
-    if (c === 'cancelled') reqStatus('Richiesta fermata.');
-    else if (c === 'not_granted' || c === 'sampling_disabled') { reqStatus('Claude non è disponibile per questo account.'); $('req-btn').hidden = true; }
-    else if (c === 'rate_limited') reqStatus('Troppe richieste ravvicinate: riprova tra qualche minuto.');
-    else if (c === 'session_expired') reqStatus('Sessione scaduta: accedi di nuovo a claude.ai.');
-    else if (c === 'refused') reqStatus('Claude non può rispondere a questa richiesta: prova a riformularla.');
-    else reqStatus('Non sono riuscito a completare la richiesta: riprova.');
-  }
-  $('req-btn').disabled = false; $('req-stop').hidden = true;
-}
-$('req-btn').addEventListener('click', askClaude);
-$('req-copy').addEventListener('click', async () => {
-  const testo = $('req-text').value.trim(); if (!testo) { reqStatus('Scrivi prima cosa vuoi cambiare.'); return; }
-  const p = S.configured ? S.p : null; const att = Array.isArray(memory.imp.attrezzi) ? memory.imp.attrezzi : ATT_DEF;
-  const msg = `Richiesta per il mio piano WattPlan:\n${testo}\n\nDati: livello ${p ? p.livello : '—'}; ${p ? (p.modalita === 'evento' ? `${p.nome_evento}, ${p.km} km, ${p.dplus} m D+` : 'obiettivo: ' + p.obiettivo_txt) : 'piano non ancora impostato'}; forza ${p && !p.forza ? 'esclusa' : 'inclusa'}; attrezzi: ${att.length ? att.join(', ') : 'nessuno'}.`;
-  try { await navigator.clipboard.writeText(msg); reqStatus('Richiesta copiata: incollala dove vuoi inviarla.'); }
-  catch (e) { reqStatus('Non riesco a copiare in automatico: seleziona il testo della richiesta e copialo a mano.'); }
-});
-$('req-stop').addEventListener('click', () => { if (reqCtl) reqCtl.abort(); });
-$('req-clear').addEventListener('click', () => { memory.imp.custom = null; persist(); $('req-text').value = ''; render(); fillLog(); renderCustom(); reqStatus('Personalizzazioni rimosse: torni al piano originale.'); });
+function renderCustom() {}
 $('save-att').addEventListener('click', () => { memory.imp.attrezzi = [...document.querySelectorAll('#att input')].filter((c) => c.checked).map((c) => c.value); persist(); if (S.configured) render(); flag('ok-att', true); });
 const FTP_RATIO = 0.95;
 const ftpAuto = {ftpout: false, ftpin: false};
@@ -1777,10 +1692,6 @@ $('import').addEventListener('change', (ev) => {
 let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { if (S.configured) renderChart(); }, 150); });
 
 load(); render(); fillForms(); fillLog();
-(async () => {
-  try { SAMPLE = window.claude && window.claude.use ? await window.claude.use('sample') : null; } catch (e) { SAMPLE = null; }
-  $('req-off').hidden = !!SAMPLE; $('req-btn').hidden = !SAMPLE;
-})();
 
 function markLong() { document.querySelectorAll('.scroll td').forEach((td) => td.classList.toggle('long', td.textContent.trim().length > 26)); }
 { const _render = render; render = function () { const x = _render.apply(this, arguments); markLong(); return x; }; markLong(); }
