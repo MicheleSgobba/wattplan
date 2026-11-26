@@ -315,13 +315,30 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 .ibtn[aria-expanded="true"]{background:var(--accent);color:#fff}
 .infobox{margin:0 0 12px;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--accent) 7%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line))}
 .infobox p{margin:6px 0}
+@media (prefers-reduced-motion: no-preference){
+@keyframes wpUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes wpDrop{from{opacity:0;transform:translateY(-6px) scaleY(.97)}to{opacity:1;transform:none}}
+@keyframes wpFade{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes wpGrow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes wpGlow{0%,100%{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}50%{box-shadow:0 0 0 7px color-mix(in srgb,var(--accent) 18%,transparent)}}
+.infobox:not([hidden]),details[open]>.more-body,.pesobox:not([hidden]){animation:wpDrop .28s ease both;transform-origin:top}
+.btn{transition:transform .12s ease,box-shadow .15s ease,filter .15s ease}
+.btn:active{transform:scale(.95)}
+.ibtn{transition:transform .35s cubic-bezier(.2,.8,.2,1),background .2s,color .2s}
+.ibtn[aria-expanded="true"]{transform:rotate(360deg)}
+.day.wp-in{animation:wpFade .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0) * 45ms)}
+.day.today{animation:wpGlow 1.8s ease-in-out 3}
+#chart.grow svg rect{transform-box:fill-box;transform-origin:50% 100%;animation:wpGrow .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 16ms)}
+#savebar:not([hidden]){animation:wpUp .32s cubic-bezier(.2,.8,.2,1) both}
+.hrow,.err{transition:opacity .2s,border-color .2s,box-shadow .2s}
+}
 </style>
 </head>
 <body>
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.22 · 26/11/2026)</p>
+<p class="ver" id="ver">(versione 1.23 · 26/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -631,7 +648,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.22 · 26/11/2026';
+const APP_VER = '1.23 · 26/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -1752,6 +1769,16 @@ function infoize() {
   });
 }
 infoize();
+
+(function animations() {
+  if (!window.matchMedia || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  let lastW = null, grown = false;
+  const _rw = renderWeek; renderWeek = function () { const x = _rw.apply(this, arguments); if (sel !== lastW) { lastW = sel; document.querySelectorAll('.day').forEach((d, i) => { d.classList.remove('wp-in'); void d.offsetWidth; d.style.setProperty('--d', i); d.classList.add('wp-in'); }); } return x; };
+  const _rc = renderChart; renderChart = function () { const x = _rc.apply(this, arguments); if (!grown && S.configured) { const c = $('chart'); if (c && c.querySelector('svg')) { grown = true; const go = () => { c.querySelectorAll('svg rect').forEach((r, i) => r.style.setProperty('--i', i)); c.classList.add('grow'); setTimeout(() => c.classList.remove('grow'), 2500); }; if ('IntersectionObserver' in window) { c.style.visibility = 'hidden'; const o = new IntersectionObserver((en) => { if (en.some((e) => e.isIntersecting)) { o.disconnect(); c.style.visibility = ''; go(); } }, {threshold: 0.3}); o.observe(c); } else go(); } } return x; };
+  const cnt = () => document.querySelectorAll('.kpi .big').forEach((e) => { const t = e.textContent.trim(); if (!/^\d{1,4}$/.test(t) || e.dataset.cnt === t) return; e.dataset.cnt = t; const n = +t, t0 = performance.now(); const step = (now) => { const k = Math.min(1, (now - t0) / 700); e.textContent = String(Math.round(n * (1 - Math.pow(1 - k, 3)))); if (k < 1) requestAnimationFrame(step); }; requestAnimationFrame(step); });
+  const _r3 = render; render = function () { const x = _r3.apply(this, arguments); cnt(); return x; };
+  if (S.configured) { lastW = null; renderWeek(); grown = false; renderChart(); cnt(); }
+})();
 </script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
