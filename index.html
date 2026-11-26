@@ -78,7 +78,7 @@ input::placeholder{color:var(--muted);opacity:.7}
 .disc-b .shock{stroke:var(--blue);stroke-width:3.5;stroke-linecap:round}
 .disc-b .bag{fill:var(--blue);opacity:.85}
 @media (max-width:520px){.disc-b small{display:none}.disc-b svg{width:60px;height:37px}.disc-b b{font-size:12px}}
-.btn.big{display:block;width:100%;padding:16px 20px;font-size:17px;border-radius:16px}
+.btn.btn-big{display:block;width:100%;padding:16px 20px;font-size:17px;border-radius:16px}
 #crea{text-align:center}
 #savebar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:50;display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:640px;margin:0 auto;padding:10px 10px 10px 18px;border-radius:999px;background:var(--panel);border:1px solid var(--line);box-shadow:0 10px 30px rgba(16,24,40,.25);font-weight:700;font-size:14px}
 #savebar[hidden]{display:none}
@@ -309,13 +309,15 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 .legend span,.chips span,#og-tot{box-shadow:0 1px 0 rgba(255,255,255,.8) inset,0 2px 6px -2px rgba(16,24,40,.15)}
 @media (prefers-reduced-motion:reduce){.kpi .card:hover,.day:hover,.phase .card:hover,.disc-b.on{transform:none}}
 @media print{body{background:#fff!important}body::before{display:none}.card,.chart,.scroll,details{backdrop-filter:none;box-shadow:none}}
+.card.sub{margin-top:16px;padding:16px;background:var(--panel2);border:1px solid var(--line);box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 2px 8px rgba(16,24,40,.06);backdrop-filter:none;-webkit-backdrop-filter:none}
+.card.sub h2{font-size:17px;margin-top:0}
 </style>
 </head>
 <body>
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.20 · 26/11/2026)</p>
+<p class="ver" id="ver">(versione 1.21 · 26/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -361,14 +363,11 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 </div>
 <div class="form">
 <button type="button" class="btn ghost f-gen" id="restart" hidden>Ricomincia il ciclo da questa settimana</button>
-<button type="button" class="btn ghost danger" id="reset-all">Azzera tutte le scelte</button>
 </div>
 <p class="plan">Profilo: <b id="p-tipo">—</b>, terreno <b id="p-terr">—</b> (<span id="p-mpk">—</span> m di salita per km) · disciplina <b id="p-disc">—</b> · livello <b id="p-liv">—</b> · <span id="p-gg">—</span> giorni e <span id="p-ore">—</span> h a settimana · lungo il <b id="p-lday">—</b></p>
 <p id="p-enf" class="plan">—</p>
 <p class="muted">L’inizio scatta sempre al lunedì della settimana scelta. Per un evento la durata va dall’inizio alla gara (da 6 a 52 settimane); per l’obiettivo generico la scegli tu: sotto le 16 settimane taglio la Base, sopra aggiungo preparazione generale. Cambiare la data di inizio crea un registro nuovo; cambiare km, dislivello, ore o durata no.</p>
-</section>
-
-<section class="card" id="imp">
+<div class="card sub" id="imp">
 <h2>FTP</h2>
 <div class="form">
 <label class="field"><span>FTP fuori (W)</span><input id="ftpout" type="number" placeholder="es. 250" min="100" max="500" step="1"></label>
@@ -379,9 +378,8 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <label class="check"><input type="checkbox" id="ftp-recente"> Il mio FTP è stato misurato nelle ultime 4 settimane</label>
 <p class="muted">Se non è spuntato, il piano parte con un test FTP nella prima settimana. In ogni caso i test si ripetono circa ogni 4–8 settimane, nelle settimane di scarico.</p>
 <p class="muted plan">In uso: <span id="f-out">—</span> W fuori, <span id="f-in">—</span> W sui rulli. Dopo ogni test FTP cambia questi numeri: tutti i watt del piano e delle zone si ricalcolano.</p>
-</section>
-
-<section class="card" id="atleta">
+</div>
+<div class="card sub" id="atleta">
 <h2>Dati dell’atleta</h2>
 <div class="form">
 <label class="field"><span>Età (anni)</span><input id="eta" type="number" min="14" max="90" step="1" placeholder="es. 38"></label>
@@ -394,6 +392,7 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="lbl">Il tuo profilo</div>
 <ul id="atl-list"></ul>
 <p class="muted">Stime indicative, non una valutazione medica.</p>
+</div>
 </div>
 </section>
 
@@ -417,7 +416,8 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 </section>
 
 <section class="card" id="crea">
-<button type="button" class="btn big" id="save-obj">Crea il piano</button>
+<button type="button" class="btn btn-big" id="save-obj">Crea il piano</button>
+<button type="button" class="btn ghost danger" id="reset-all" style="margin-top:10px">Azzera tutte le scelte</button>
 <p class="ok muted msg" id="ok-obj" hidden>Piano aggiornato: date, lunghi e sedute ricalcolati.</p>
 <p class="bad msg-bad" hidden>Non salvato: controlla i valori e riprova.</p>
 <p class="muted" style="margin:8px 0 0">Controlla programma, FTP, dati dell’atleta e forza in palestra: il piano si costruisce con tutti questi dati.</p>
@@ -628,7 +628,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.20 · 26/11/2026';
+const APP_VER = '1.21 · 26/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
