@@ -103,6 +103,12 @@ input::placeholder{color:var(--muted);opacity:.7}
 .days{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:14px}
 .day{position:relative;border:1px solid var(--line);border-radius:16px;padding:14px 14px 12px;background:var(--panel2);overflow:hidden;transition:transform .12s}
 .day::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--line)}
+.pesobox{margin-top:10px;padding:12px;border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line))}
+.pesobox p{margin:6px 0}
+.day .pesobox b{display:block;text-transform:none;letter-spacing:0;font-size:14px;color:var(--text);margin:0}
+.pesobox .warnp{color:#b45309;font-weight:600}
+.pzrow{display:flex;gap:8px;margin-top:6px}
+.pzrow input{flex:1;min-width:0}
 .ddate{color:var(--text);font-weight:800}
 .day.today{border-color:var(--accent)!important;box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent),var(--d1)!important}
 .day.today .ddate::after{content:' · oggi';color:var(--accent)}
@@ -309,7 +315,7 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.19 · 26/11/2026)</p>
+<p class="ver" id="ver">(versione 1.20 · 26/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -381,7 +387,7 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <label class="field"><span>Età (anni)</span><input id="eta" type="number" min="14" max="90" step="1" placeholder="es. 38"></label>
 <label class="field"><span>Sesso</span><select id="sesso"><option value="">— scegli —</option><option value="M">Uomo</option><option value="F">Donna</option></select></label>
 <label class="field"><span>Altezza (cm)</span><input id="altezza" type="number" min="130" max="215" step="1" placeholder="es. 178"></label>
-<label class="field"><span>Peso (kg)</span><input id="peso" type="number" min="35" max="150" step="0.5" placeholder="es. 73"></label>
+<label class="field"><span>Peso (kg)</span><input id="peso" type="number" min="35" max="150" step="0.1" placeholder="es. 73"></label>
 </div>
 <p class="muted">Servono per il rapporto watt/kg, la stima del tempo di gara, la frequenza cardiaca, l’alimentazione e i recuperi in base all’età. Restano salvati solo in questo browser. Si salvano con «Crea il piano» o «Aggiorna il piano», in fondo ai dati.</p>
 <div class="req-out plan" id="atl-out">
@@ -440,13 +446,13 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <p class="adv" id="w-adv">—</p>
 <p><b>Obiettivo della settimana:</b> <span id="w-focus">—</span></p>
 <div class="days">
-<div class="day" id="day-lun"><b>Lunedì <span class="ddate" id="dd-lun"></span> <span id="dh-lun"></span></b><span id="d-lun">—</span><button type="button" class="btn ghost zwo" data-d="lun" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="lun" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-lun"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-lun"></div></details></div>
-<div class="day" id="day-mar"><b>Martedì <span class="ddate" id="dd-mar"></span> <span id="dh-mar"></span></b><span id="d-mar">—</span><button type="button" class="btn ghost zwo" data-d="mar" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="mar" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-mar"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-mar"></div></details></div>
-<div class="day" id="day-mer"><b>Mercoledì <span class="ddate" id="dd-mer"></span> <span id="dh-mer"></span></b><span id="d-mer">—</span><button type="button" class="btn ghost zwo" data-d="mer" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="mer" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-mer"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-mer"></div></details></div>
-<div class="day" id="day-gio"><b>Giovedì <span class="ddate" id="dd-gio"></span> <span id="dh-gio"></span></b><span id="d-gio">—</span><button type="button" class="btn ghost zwo" data-d="gio" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="gio" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-gio"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-gio"></div></details></div>
-<div class="day" id="day-ven"><b>Venerdì <span class="ddate" id="dd-ven"></span> <span id="dh-ven"></span></b><span id="d-ven">—</span><button type="button" class="btn ghost zwo" data-d="ven" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="ven" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-ven"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-ven"></div></details></div>
-<div class="day" id="day-sab"><b>Sabato <span class="ddate" id="dd-sab"></span> <span id="dh-sab"></span></b><span id="d-sab">—</span><button type="button" class="btn ghost zwo" data-d="sab" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="sab" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-sab"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-sab"></div></details></div>
-<div class="day" id="day-dom"><b>Domenica <span class="ddate" id="dd-dom"></span> <span id="dh-dom"></span></b><span id="d-dom">—</span><button type="button" class="btn ghost zwo" data-d="dom" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="dom" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-dom"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-dom"></div></details></div>
+<div class="day" id="day-lun"><b>Lunedì <span class="ddate" id="dd-lun"></span> <span id="dh-lun"></span></b><span id="d-lun">—</span><div class="pesobox" id="pz-lun" hidden></div><button type="button" class="btn ghost zwo" data-d="lun" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="lun" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-lun"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-lun"></div></details></div>
+<div class="day" id="day-mar"><b>Martedì <span class="ddate" id="dd-mar"></span> <span id="dh-mar"></span></b><span id="d-mar">—</span><div class="pesobox" id="pz-mar" hidden></div><button type="button" class="btn ghost zwo" data-d="mar" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="mar" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-mar"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-mar"></div></details></div>
+<div class="day" id="day-mer"><b>Mercoledì <span class="ddate" id="dd-mer"></span> <span id="dh-mer"></span></b><span id="d-mer">—</span><div class="pesobox" id="pz-mer" hidden></div><button type="button" class="btn ghost zwo" data-d="mer" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="mer" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-mer"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-mer"></div></details></div>
+<div class="day" id="day-gio"><b>Giovedì <span class="ddate" id="dd-gio"></span> <span id="dh-gio"></span></b><span id="d-gio">—</span><div class="pesobox" id="pz-gio" hidden></div><button type="button" class="btn ghost zwo" data-d="gio" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="gio" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-gio"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-gio"></div></details></div>
+<div class="day" id="day-ven"><b>Venerdì <span class="ddate" id="dd-ven"></span> <span id="dh-ven"></span></b><span id="d-ven">—</span><div class="pesobox" id="pz-ven" hidden></div><button type="button" class="btn ghost zwo" data-d="ven" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="ven" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-ven"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-ven"></div></details></div>
+<div class="day" id="day-sab"><b>Sabato <span class="ddate" id="dd-sab"></span> <span id="dh-sab"></span></b><span id="d-sab">—</span><div class="pesobox" id="pz-sab" hidden></div><button type="button" class="btn ghost zwo" data-d="sab" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="sab" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-sab"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-sab"></div></details></div>
+<div class="day" id="day-dom"><b>Domenica <span class="ddate" id="dd-dom"></span> <span id="dh-dom"></span></b><span id="d-dom">—</span><div class="pesobox" id="pz-dom" hidden></div><button type="button" class="btn ghost zwo" data-d="dom" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="dom" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-dom"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-dom"></div></details></div>
 </div>
 <div class="daykey"><span><i style="background:linear-gradient(90deg,#ff5a1f,#ff9b3d)"></i>Qualità</span><span><i style="background:linear-gradient(90deg,#4f7cff,#00b8a9)"></i>Lungo</span><span><i style="background:#a259ff"></i>Forza</span><span><i style="background:#00b8a9"></i>Z2 e recupero</span><span><i style="background:var(--line)"></i>Riposo</span></div>
 <details class="zwo-help"><summary>Come caricare il file .zwo su Zwift o MyWhoosh</summary><ul>
@@ -622,7 +628,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.19 · 26/11/2026';
+const APP_VER = '1.20 · 26/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -1287,7 +1293,7 @@ function renderWeek() {
   const hasF = DOW.some((d) => /^Forza/.test(r.days[d])); $('pdf-forza').disabled = !hasF; $('pdf-forza').parentElement.style.opacity = hasF ? 1 : 0.5; $('pdf-noforza').hidden = hasF;
   ['lun','mar','mer','gio','ven','sab','dom'].forEach((d) => {
     const raw = r.days[d]; const shown = watts(raw, f);
-    txt('d-' + d, shown);
+    txt('d-' + d, shown); pesoBox(d, r);
     $('d-' + d).parentElement.className = 'day ' + (/^(Riposo|Saltato)/.test(raw) ? 't-r' : /^Forza/.test(raw) ? 't-f' : (p.slotOf[d] === 'sab' || /^(Lungo|Gravel|PROVA|GARA)/.test(raw)) ? 't-l' : /×|TEST|soglia|sweet|VO2/.test(raw) && !/al posto della forza/.test(raw) ? 't-q' : 't-z');
     { const dd = iso(Date.parse(r.inizio) + DOW.indexOf(d) * DAY); $('dd-' + d).textContent = it(dd).slice(0, 5); $('day-' + d).classList.toggle('today', dd === iso(oggiMs())); }
     $('dh-' + d).textContent = p.og[d] > 0 ? `· ${p.og[d] >= 1 ? fmtH(p.og[d]) : Math.round(p.og[d] * 60) + "'"} disponibili` : '';
@@ -1375,7 +1381,7 @@ function saveAll(okId, over) {
   const dEl = $('data'), iEl = $('inizio');
   const dataOk = !!(dEl.value && dEl.validity.valid), iOk = !!(iEl.value && iEl.validity.valid);
   const dur = Math.round(+$('durata').value), durOk = dur >= 6 && dur <= 52;
-  const d = Object.assign({eta: Math.round(+$('eta').value) || null, sesso: $('sesso').value || null, altezza: Math.round(+$('altezza').value) || null, peso: Math.round(+$('peso').value * 2) / 2 || null, disciplina: disc || 'gravel', ftp_recente: $('ftp-recente').checked, attrezzi: Array.isArray(memory.imp.attrezzi) ? memory.imp.attrezzi : ATT_DEF, custom: memory.imp.custom || null, ftp_out: Math.round(+$('ftpout').value), ftp_in: Math.round(+$('ftpin').value), modalita: mod, nome_evento: $('nome').value.slice(0, 60), data_evento: dataOk ? dEl.value : p.data_evento, obiettivo_gen: $('objgen').value || 'ftp', km: Math.round(+$('km').value), dplus: Math.round(+$('dplus').value), terreno_gen: $('terreno').value || '', ore_giorno: readOg(), livello: $('livello').value || (S.configured ? p.livello : ''), forza: p.forza, inizio_piano: iOk ? snap(iEl.value) : p.inizio_piano, durata_sett: durOk ? dur : p.durata_sett}, over || {});
+  const d = Object.assign({eta: Math.round(+$('eta').value) || null, sesso: $('sesso').value || null, altezza: Math.round(+$('altezza').value) || null, peso: Math.round(+$('peso').value * 10) / 10 || null, disciplina: disc || 'gravel', ftp_recente: $('ftp-recente').checked, attrezzi: Array.isArray(memory.imp.attrezzi) ? memory.imp.attrezzi : ATT_DEF, custom: memory.imp.custom || null, ftp_out: Math.round(+$('ftpout').value), ftp_in: Math.round(+$('ftpin').value), modalita: mod, nome_evento: $('nome').value.slice(0, 60), data_evento: dataOk ? dEl.value : p.data_evento, obiettivo_gen: $('objgen').value || 'ftp', km: Math.round(+$('km').value), dplus: Math.round(+$('dplus').value), terreno_gen: $('terreno').value || '', ore_giorno: readOg(), livello: $('livello').value || (S.configured ? p.livello : ''), forza: p.forza, inizio_piano: iOk ? snap(iEl.value) : p.inizio_piano, durata_sett: durOk ? dur : p.durata_sett}, over || {});
   const errs = [];
   const chk = (cond, id, txt) => { if (!cond) errs.push([id, txt]); };
   if (mod === 'evento') chk(dataOk || !!over, 'data', 'data dell’evento');
@@ -1405,6 +1411,7 @@ function saveAll(okId, over) {
     document.querySelectorAll('.msg-bad').forEach((m2) => { m2.textContent = txt; });
     const first = $(errs[0][0]); if (first && first.scrollIntoView) { first.scrollIntoView({behavior: 'smooth', block: 'center'}); try { first.focus({preventScroll: true}); } catch (e) {} }
   }
+  d.peso_data = (memory.imp && +memory.imp.peso === +d.peso && memory.imp.peso_data) ? memory.imp.peso_data : iso(oggiMs());
   const first0 = !S.configured;
   if (ok) { memory.imp = d; persist(); sel = null; render(); fillForms(); fillLog(); setDirty(false); }
   flag(okId, ok);
@@ -1649,6 +1656,29 @@ $('pdf-btn').addEventListener('click', () => {
   setTimeout(() => window.print(), 50);
 });
 function renderCustom() {}
+let pesoOk = null;
+function pesoBox(d, r) {
+  const box = $('pz-' + d); if (!box) return;
+  const show = /TEST FTP/.test(r.days[d]) && !(r.skip && r.skip[d]) && !(r.alt && r.alt[d]);
+  box.hidden = !show; box.replaceChildren(); if (!show) return;
+  const imp = memory.imp || {}; const kg = +imp.peso || null; const qd = imp.peso_data;
+  const giorni = qd ? Math.round((oggiMs() - Date.parse(qd)) / DAY) : null;
+  const mk = (tag, cls, t) => { const e = document.createElement(tag); if (cls) e.className = cls; if (t !== undefined) e.textContent = t; box.appendChild(e); return e; };
+  mk('b', '', 'Settimana del test: controlla il peso');
+  mk('p', '', 'Pesati 2–3 mattine questa settimana, appena sveglio, dopo il bagno e prima di mangiare, e inserisci la media. Una sola pesata può sbagliare di 1–2 kg.');
+  mk('p', 'muted', kg ? `Ultimo peso: ${num(kg, 1)} kg` + (qd ? `, inserito il ${it(qd)}` : ', data non registrata') : 'Peso non ancora inserito.');
+  if (giorni !== null && giorni > 56) mk('p', 'warnp', `Non lo aggiorni da ${Math.floor(giorni / 7)} settimane: watt/kg e alimentazione potrebbero non essere più corretti.`);
+  const row = mk('div', 'pzrow'); const inp = document.createElement('input'); inp.type = 'number'; inp.min = '35'; inp.max = '150'; inp.step = '0.1'; inp.inputMode = 'decimal'; inp.placeholder = kg ? String(kg) : 'kg'; inp.setAttribute('aria-label', 'Peso medio in kg');
+  const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn'; bt.textContent = 'Aggiorna';
+  row.append(inp, bt);
+  const msg = mk('p', 'muted'); msg.hidden = true;
+  if (pesoOk === d) { msg.hidden = false; msg.textContent = 'Peso aggiornato: watt/kg e alimentazione ricalcolati.'; pesoOk = null; }
+  bt.addEventListener('click', () => {
+    const v = Math.round(+String(inp.value).replace(',', '.') * 10) / 10;
+    if (!(v >= 35 && v <= 150)) { msg.hidden = false; msg.className = 'bad'; msg.textContent = 'Inserisci un peso tra 35 e 150 kg.'; inp.classList.add('err'); return; }
+    memory.imp.peso = v; memory.imp.peso_data = iso(oggiMs()); persist(); pesoOk = d; render(); fillForms();
+  });
+}
 $('save-att').addEventListener('click', () => { memory.imp.attrezzi = [...document.querySelectorAll('#att input')].filter((c) => c.checked).map((c) => c.value); persist(); if (S.configured) render(); flag('ok-att', true); });
 const FTP_RATIO = 0.95;
 const ftpAuto = {ftpout: false, ftpin: false};
