@@ -9,8 +9,8 @@ DTSTART:20261129T200000
 DURATION:PT15M
 RRULE:FREQ=WEEKLY;BYDAY=SU
 SUMMARY:WattPlan · com’è andata la settimana?
-DESCRIPTION:Apri WattPlan e registra ore\, fatica e TSS della settimana: il piano si adatta.\nhttps://michelesgobba-ship-it.github.io/wattplan/
-URL:https://michelesgobba-ship-it.github.io/wattplan/
+DESCRIPTION:Apri WattPlan e registra ore\, fatica e TSS della settimana: il piano si adatta.\nhttps://michelesgobba.github.io/wattplan/
+URL:https://michelesgobba.github.io/wattplan/
 BEGIN:VALARM
 ACTION:DISPLAY
 TRIGGER:PT0M
