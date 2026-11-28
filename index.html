@@ -403,7 +403,7 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="tk">
 <header class="hero"><button type="button" class="newsbtn" id="news-btn">Novità</button>
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.42 · 28/11/2026)</p>
+<p class="ver" id="ver">(versione 1.43 · 28/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -461,6 +461,8 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <p class="muted">Ti basta inserirne uno: l’altro si stima da solo, considerando l’FTP sui rulli circa il 5% più basso di quello all’aperto. Se hai fatto il test in entrambi i modi, inserisci tutti e due.</p>
 <p class="muted" id="ftp-auto" hidden></p>
 <label class="check"><input type="checkbox" id="ftp-recente"> Il mio FTP è stato misurato nelle ultime 4 settimane</label>
+<label class="field" id="ftp-data-w" hidden><span>Data del test</span><input id="ftp-data" type="date"></label>
+<p class="muted" id="ftp-data-msg" hidden style="flex-basis:100%;margin:0"></p>
 <p class="muted">Se non è spuntato, il piano parte con un test FTP nella prima settimana. In ogni caso i test si ripetono circa ogni 4–8 settimane, nelle settimane di scarico.</p>
 <p class="muted plan">In uso: <span id="f-out">—</span> W fuori, <span id="f-in">—</span> W sui rulli. Dopo ogni test FTP cambia questi numeri: tutti i watt del piano e delle zone si ricalcolano.</p>
 </div>
@@ -720,7 +722,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.42 · 28/11/2026';
+const APP_VER = '1.43 · 28/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -821,7 +823,8 @@ function profilo(r) {
   const wkg = (peso && +r.ftp_out) ? +r.ftp_out / peso : null;
   const durata = `${Math.floor(min / 60)}h${String(min % 60).padStart(2, '0')}`;
   const forza = r.forza !== false;
-  const e = [];
+  const e = []; const ftpGap = r.ftp_recente === true && r.ftp_data ? Math.round((Date.parse(inizio_piano) - Date.parse(r.ftp_data)) / DAY) : null; const ftpOld = ftpGap !== null && ftpGap > 28;
+  if (ftpOld) e.push(`Il test FTP del ${it(r.ftp_data)} è di ${Math.floor(ftpGap / 7)} settimane prima dell’inizio del piano: il piano parte con un nuovo test.`);
   e.push({strada: 'Strada: nelle fasi di Build e Specifico si aggiungono volate ai lavori del giovedì; lunghi su asfalto, meglio in gruppo.', gravel: 'Gravel: lunghi e costanti su sterrato, sweet spot e soglia, tanta alimentazione.', xc: 'MTB cross country: nelle fasi di Build e Specifico più VO2max e lavori anaerobici brevi, lunghi al massimo di 3 ore in MTB e Z2 dedicati alla tecnica.'}[disciplina]);
   if (modalita === 'generico') e.push({ftp:'Obiettivo FTP: soglia e sweet spot al centro, VO2max nel secondo blocco.', resistenza:'Obiettivo resistenza: lunghi progressivi e sweet spot lunghi al posto di metà dei VO2max.', salita:'Obiettivo salita: lavori del giovedì in salita o a 60–70 rpm e lunghi con dislivello.'}[obiettivo_gen]);
   else {
@@ -845,7 +848,7 @@ function profilo(r) {
   if (assigned.includes('rec')) e.push('Giorni in più: 45 minuti di recupero attivo, facoltativi.');
   if (avail.some((d) => (slotOf[d] === 'mar' || slotOf[d] === 'gio') && og[d] < 0.9)) e.push('Le sedute di qualità chiedono circa 1 ora: nei giorni con meno tempo si accorciano.');
   if (modalita === 'evento' && durata_h > lungo_cap) e.push(`Il giorno con più tempo ha ${fmtH(lungo_cap)}: per ${km} km l’uscita lunga ne richiederebbe di più.`);
-  return {modalita, nome_evento, data_evento, data_evento_txt: it(data_evento), obiettivo_gen, obiettivo_txt, inizio_piano, inizio_txt: it(inizio_piano), n_piano, durata_sett: durata_gen, fine_txt, giorni, km, dplus, ore_sett: ore, m_per_km: Math.round(mpk), tipo, terreno, durata, durata_h, lungo_cap, forza, livello, giorni_sett, og, slotOf, lungoDay, disciplina, ftp_recente: r.ftp_recente === true, eta, peso, altezza, sesso, hrmax, wkg, enfasi: e.join(' ')};
+  return {modalita, nome_evento, data_evento, data_evento_txt: it(data_evento), obiettivo_gen, obiettivo_txt, inizio_piano, inizio_txt: it(inizio_piano), n_piano, durata_sett: durata_gen, fine_txt, giorni, km, dplus, ore_sett: ore, m_per_km: Math.round(mpk), tipo, terreno, durata, durata_h, lungo_cap, forza, livello, giorni_sett, og, slotOf, lungoDay, disciplina, ftp_recente: r.ftp_recente === true && !ftpOld, ftp_data: r.ftp_data || null, ftp_old: ftpOld, eta, peso, altezza, sesso, hrmax, wkg, enfasi: e.join(' ')};
 }
 
 const hOf = (t) => { const m = String(t).match(/^(\d+)h(\d{2})?|^(\d+)['’]/); return m ? (m[3] ? +m[3] / 60 : +m[1] + (m[2] ? +m[2] / 60 : 0)) : 1; };
@@ -1189,7 +1192,7 @@ function fillForms() {
   $('nome').value = p.nome_evento; $('data').value = p.data_evento; $('objgen').value = p.obiettivo_gen;
   $('inizio').value = p.inizio_piano; $('durata').value = p.durata_sett;
   $('km').value = p.modalita === 'evento' ? p.km : (memory.imp.km || ''); $('dplus').value = p.modalita === 'evento' ? p.dplus : (memory.imp.dplus === undefined ? '' : memory.imp.dplus); $('terreno').value = memory.imp.terreno_gen || (p.modalita === 'generico' ? p.terreno : ''); DOW.forEach((x) => { setOg(x, p.og[x]); }); ogTot(); $('livello').value = p.livello;
-  $('ftpout').value = f.ftp_out; $('ftpin').value = f.ftp_in; $('ftp-recente').checked = !!p.ftp_recente; $('eta').value = p.eta || ''; $('sesso').value = p.sesso || ''; $('altezza').value = p.altezza || ''; $('peso').value = p.peso || '';
+  $('ftpout').value = f.ftp_out; $('ftpin').value = f.ftp_in; $('ftp-recente').checked = !!(memory.imp && memory.imp.ftp_recente); $('ftp-data').value = (memory.imp && memory.imp.ftp_data) || ''; ftpDataUi(); $('eta').value = p.eta || ''; $('sesso').value = p.sesso || ''; $('altezza').value = p.altezza || ''; $('peso').value = p.peso || '';
   setMode(p.modalita); setForzaBtn(p.forza); setDisc(p.disciplina);
 }
 function fillLog() {
@@ -1741,7 +1744,7 @@ function saveAll(okId, over) {
   const dEl = $('data'), iEl = $('inizio');
   const dataOk = !!(dEl.value && dEl.validity.valid), iOk = !!(iEl.value && iEl.validity.valid);
   const dur = Math.round(+$('durata').value), durOk = dur >= 6 && dur <= 52;
-  const d = Object.assign({eta: Math.round(+$('eta').value) || null, sesso: $('sesso').value || null, altezza: Math.round(+$('altezza').value) || null, peso: Math.round(+$('peso').value * 10) / 10 || null, disciplina: disc || 'gravel', ftp_recente: $('ftp-recente').checked, attrezzi: Array.isArray(memory.imp.attrezzi) ? memory.imp.attrezzi : ATT_DEF, custom: memory.imp.custom || null, ftp_out: Math.round(+$('ftpout').value), ftp_in: Math.round(+$('ftpin').value), modalita: mod, nome_evento: $('nome').value.slice(0, 60), data_evento: dataOk ? dEl.value : p.data_evento, obiettivo_gen: $('objgen').value || 'ftp', km: Math.round(+$('km').value), dplus: Math.round(+$('dplus').value), terreno_gen: $('terreno').value || '', ore_giorno: readOg(), livello: $('livello').value || (S.configured ? p.livello : ''), forza: p.forza, inizio_piano: iOk ? snap(iEl.value) : p.inizio_piano, durata_sett: durOk ? dur : p.durata_sett}, over || {});
+  const d = Object.assign({eta: Math.round(+$('eta').value) || null, sesso: $('sesso').value || null, altezza: Math.round(+$('altezza').value) || null, peso: Math.round(+$('peso').value * 10) / 10 || null, disciplina: disc || 'gravel', ftp_recente: $('ftp-recente').checked, ftp_data: $('ftp-recente').checked && $('ftp-data').value ? $('ftp-data').value : null, attrezzi: Array.isArray(memory.imp.attrezzi) ? memory.imp.attrezzi : ATT_DEF, custom: memory.imp.custom || null, ftp_out: Math.round(+$('ftpout').value), ftp_in: Math.round(+$('ftpin').value), modalita: mod, nome_evento: $('nome').value.slice(0, 60), data_evento: dataOk ? dEl.value : p.data_evento, obiettivo_gen: $('objgen').value || 'ftp', km: Math.round(+$('km').value), dplus: Math.round(+$('dplus').value), terreno_gen: $('terreno').value || '', ore_giorno: readOg(), livello: $('livello').value || (S.configured ? p.livello : ''), forza: p.forza, inizio_piano: iOk ? snap(iEl.value) : p.inizio_piano, durata_sett: durOk ? dur : p.durata_sett}, over || {});
   const errs = [];
   const chk = (cond, id, txt) => { if (!cond) errs.push([id, txt]); };
   if (mod === 'evento') chk(dataOk || !!over, 'data', 'data dell’evento');
@@ -1758,6 +1761,7 @@ function saveAll(okId, over) {
     chk(d.ftp_out >= 100 && d.ftp_out <= 500, 'ftpout', 'FTP fuori (100–500 W)');
     chk(d.ftp_in >= 100 && d.ftp_in <= 500, 'ftpin', 'FTP rulli (100–500 W)');
   }
+  chk(!d.ftp_data || Date.parse(d.ftp_data) <= oggiMs(), 'ftp-data', 'data del test FTP (non può essere nel futuro)');
   chk(d.eta >= 14 && d.eta <= 90, 'eta', 'età (14–90 anni)');
   chk(d.sesso === 'M' || d.sesso === 'F', 'sesso', 'sesso');
   chk(d.altezza >= 130 && d.altezza <= 215, 'altezza', 'altezza (130–215 cm)');
@@ -2288,7 +2292,7 @@ function dlAll() {
   document.body.appendChild(ov); document.body.classList.add('modal-open');
 }
 $('dl-all').addEventListener('click', dlAll);
-const NEWS = [["1.37", "28/11", "Un solo formato .zwo per Zwift, MyWhoosh e TrainingPeaks, lungo compreso."], ["1.36", "28/11", "Settimana intera scaricabile in un unico .zip anche in .zwo e .fit, oltre ai singoli giorni."], ["1.34", "28/11", "Sedute del piano segnate come fatte con i dati del .fit e voto da 1 a 10 rispetto ai target."], ["1.33", "28/11", "Importazione del file .fit (o dello .zip di Garmin) dal ciclocomputer."], ["1.32", "28/11", "Allenamento tuo con dati specifici (tempo, km, dislivello, watt, NP, FC, kJ, TSS) in una finestra a comparsa."], ["1.31", "28/11", "Allenamento inserito a mano al posto di una seduta saltata."], ["1.29", "28/11", "Settimana completa in .zip per TrainingPeaks."], ["1.28", "28/11", "Cambiando le ore a settimana iniziata, i giorni già passati restano com’erano."], ["1.27", "28/11", "Ore disponibili diverse per ogni settimana, avviso del lunedì e promemoria nel calendario."], ["1.25", "26/11", "Avviso per registrare la settimana e promemoria della domenica nel calendario."], ["1.24", "26/11", "Tolto il pulsante «Ricomincia il ciclo»."], ["1.20", "26/11", "Controllo del peso nella settimana del test FTP."], ["1.19", "26/11", "Tolta la sezione Richieste e commenti."], ["1.18", "26/11", "Barra «Aggiorna il piano» che compare quando modifichi i dati."], ["1.15", "25/11", "Recupero della bici saltata al posto della palestra."], ["1.14", "25/11", "Allenamento alternativo più facile per le giornate storte."], ["1.13", "25/11", "Data su ogni allenamento e giorno di oggi evidenziato."], ["1.12", "25/11", "Durata e fine del piano aggiornate mentre scegli le date; avviso oltre 52 settimane."], ["1.11", "25/11", "Cadenza da tenere in ogni passo dei file .fit."], ["1.10", "25/11", "Profilo dei carichi anche nel lungo."], ["1.9", "25/11", "File .fit per Garmin e Hammerhead Karoo."], ["1.8", "25/11", "Obiettivo generico: terreno al posto di km e dislivello."], ["1.5", "24/11", "Elenco dei dati mancanti quando crei il piano."], ["1.0–1.4", "24/11", "Prima versione: piano su FTP, obiettivo e ore disponibili, file .zwo, forza in palestra, alimentazione, PDF, dati dell’atleta, tema verde."]];
+const NEWS = [["1.43", "28/11", "Data del test FTP: se è di più di 4 settimane prima dell’inizio del piano, il piano parte con un nuovo test."], ["1.37", "28/11", "Un solo formato .zwo per Zwift, MyWhoosh e TrainingPeaks, lungo compreso."], ["1.36", "28/11", "Settimana intera scaricabile in un unico .zip anche in .zwo e .fit, oltre ai singoli giorni."], ["1.34", "28/11", "Sedute del piano segnate come fatte con i dati del .fit e voto da 1 a 10 rispetto ai target."], ["1.33", "28/11", "Importazione del file .fit (o dello .zip di Garmin) dal ciclocomputer."], ["1.32", "28/11", "Allenamento tuo con dati specifici (tempo, km, dislivello, watt, NP, FC, kJ, TSS) in una finestra a comparsa."], ["1.31", "28/11", "Allenamento inserito a mano al posto di una seduta saltata."], ["1.29", "28/11", "Settimana completa in .zip per TrainingPeaks."], ["1.28", "28/11", "Cambiando le ore a settimana iniziata, i giorni già passati restano com’erano."], ["1.27", "28/11", "Ore disponibili diverse per ogni settimana, avviso del lunedì e promemoria nel calendario."], ["1.25", "26/11", "Avviso per registrare la settimana e promemoria della domenica nel calendario."], ["1.24", "26/11", "Tolto il pulsante «Ricomincia il ciclo»."], ["1.20", "26/11", "Controllo del peso nella settimana del test FTP."], ["1.19", "26/11", "Tolta la sezione Richieste e commenti."], ["1.18", "26/11", "Barra «Aggiorna il piano» che compare quando modifichi i dati."], ["1.15", "25/11", "Recupero della bici saltata al posto della palestra."], ["1.14", "25/11", "Allenamento alternativo più facile per le giornate storte."], ["1.13", "25/11", "Data su ogni allenamento e giorno di oggi evidenziato."], ["1.12", "25/11", "Durata e fine del piano aggiornate mentre scegli le date; avviso oltre 52 settimane."], ["1.11", "25/11", "Cadenza da tenere in ogni passo dei file .fit."], ["1.10", "25/11", "Profilo dei carichi anche nel lungo."], ["1.9", "25/11", "File .fit per Garmin e Hammerhead Karoo."], ["1.8", "25/11", "Obiettivo generico: terreno al posto di km e dislivello."], ["1.5", "24/11", "Elenco dei dati mancanti quando crei il piano."], ["1.0–1.4", "24/11", "Prima versione: piano su FTP, obiettivo e ore disponibili, file .zwo, forza in palestra, alimentazione, PDF, dati dell’atleta, tema verde."]];
 $('news-btn').addEventListener('click', () => {
   let ov = $('man-ov'); if (ov) ov.remove();
   ov = document.createElement('div'); ov.id = 'man-ov'; ov.className = 'modal-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
@@ -2299,6 +2303,19 @@ $('news-btn').addEventListener('click', () => {
   ov.querySelector('.modal-x').addEventListener('click', close); ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
   document.body.appendChild(ov); document.body.classList.add('modal-open');
 });
+
+function ftpDataUi() {
+  const on = $('ftp-recente').checked; $('ftp-data-w').hidden = !on; const m = $('ftp-data-msg'); const v = $('ftp-data').value;
+  if (!on) { m.hidden = true; return; }
+  if (!v) { m.hidden = false; m.className = 'muted'; m.textContent = 'Se inserisci la data, controllo che il test sia davvero recente rispetto all’inizio del piano.'; return; }
+  const ini = $('inizio').value || iso(oggiMs()); const gg = Math.round((Date.parse(ini) - Date.parse(v)) / DAY); const fa = Math.round((oggiMs() - Date.parse(v)) / DAY);
+  m.hidden = false;
+  if (fa < 0) { m.className = 'bad'; m.textContent = 'La data è nel futuro: inserisci il giorno in cui hai fatto il test.'; return; }
+  if (gg > 28) { m.className = 'bad'; m.textContent = `Il test è di ${Math.floor(gg / 7)} settimane prima dell’inizio del piano: più di 4, quindi il piano partirà con un nuovo test.`; return; }
+  m.className = 'ok'; m.textContent = fa === 0 ? 'Test fatto oggi: il piano parte senza test.' : `Test di ${fa} giorni fa: il piano parte senza test.`;
+}
+['ftp-recente', 'ftp-data', 'inizio'].forEach((id) => { $(id).addEventListener('change', ftpDataUi); $(id).addEventListener('input', ftpDataUi); });
+ftpDataUi();
 </script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
