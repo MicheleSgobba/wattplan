@@ -366,13 +366,17 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 .spgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:end}
 .spgrid .field>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px!important}
 @media (prefers-reduced-motion: no-preference){.modal{animation:wpUp .28s cubic-bezier(.2,.8,.2,1) both}.modal-ov{animation:wpFadeOv .2s ease both}@keyframes wpFadeOv{from{opacity:0}to{opacity:1}}}
+.fitimp{padding:10px 12px;border-radius:14px;border:1px dashed color-mix(in srgb,var(--accent) 55%,var(--line));background:color-mix(in srgb,var(--accent) 6%,var(--panel))}
+.fitimp .btn{width:100%}
+.fitimp .ok{color:var(--accent);font-weight:600;margin:6px 0 0}
+.fitimp .bad{margin:6px 0 0}
 </style>
 </head>
 <body>
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.32 · 28/11/2026)</p>
+<p class="ver" id="ver">(versione 1.33 · 28/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -691,7 +695,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.32 · 28/11/2026';
+const APP_VER = '1.33 · 28/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -1292,6 +1296,73 @@ function renderAct(d, r) {
     mkB('Annulla', '', () => renderAct(d, r));
   });
 }
+
+async function unzipFit(buf) {
+  const b = new Uint8Array(buf); const dv = new DataView(buf);
+  let e = -1; for (let i = b.length - 22; i >= Math.max(0, b.length - 66000); i--) if (dv.getUint32(i, true) === 0x06054b50) { e = i; break; }
+  if (e < 0) throw new Error('zip');
+  const n = dv.getUint16(e + 10, true); let off = dv.getUint32(e + 16, true);
+  for (let k = 0; k < n; k++) {
+    const meth = dv.getUint16(off + 10, true), csz = dv.getUint32(off + 20, true), nl = dv.getUint16(off + 28, true), xl = dv.getUint16(off + 30, true), cl = dv.getUint16(off + 32, true), lo = dv.getUint32(off + 42, true);
+    const name = new TextDecoder().decode(b.subarray(off + 46, off + 46 + nl)); off += 46 + nl + xl + cl;
+    if (!/\.fit$/i.test(name)) continue;
+    const ds = lo + 30 + dv.getUint16(lo + 26, true) + dv.getUint16(lo + 28, true); const raw = b.subarray(ds, ds + csz);
+    if (meth === 0) return raw.slice().buffer;
+    if (meth === 8 && typeof DecompressionStream === 'function') return await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+    throw new Error('zipmeth');
+  }
+  throw new Error('nofit');
+}
+function parseFit(buf) {
+  const b = new Uint8Array(buf), dv = new DataView(buf);
+  if (b.length < 14 || String.fromCharCode(b[8], b[9], b[10], b[11]) !== '.FIT') throw new Error('nofit');
+  const hs = b[0], end = Math.min(b.length, hs + dv.getUint32(4, true)); let i = hs;
+  const defs = {}; const sess = []; const recs = []; let lastTs = 0;
+  const SZ = {0: 1, 1: 1, 2: 1, 3: 2, 4: 2, 5: 4, 6: 4, 7: 1, 8: 4, 9: 8, 10: 1, 11: 2, 12: 4, 13: 1, 14: 8, 15: 8, 16: 8};
+  const INV = {0: 0xFF, 1: 0x7F, 2: 0xFF, 3: 0x7FFF, 4: 0xFFFF, 5: 0x7FFFFFFF, 6: 0xFFFFFFFF, 10: 0, 11: 0, 12: 0};
+  const rd = (o, bt, le) => { switch (bt) { case 0: case 2: case 10: case 13: return dv.getUint8(o); case 1: return dv.getInt8(o); case 3: return dv.getInt16(o, le); case 4: case 11: return dv.getUint16(o, le); case 5: return dv.getInt32(o, le); case 6: case 12: return dv.getUint32(o, le); case 8: return dv.getFloat32(o, le); default: return null; } };
+  while (i < end) {
+    const h = b[i++];
+    if (h & 0x80) { const loc = (h >> 5) & 3, d = defs[loc]; if (!d) throw new Error('bad'); const v = readMsg(d); const ofs = h & 0x1F; let ts = (lastTs & ~0x1F) + ofs; if (ofs < (lastTs & 0x1F)) ts += 0x20; lastTs = ts; v[253] = ts; take(d.g, v); continue; }
+    if (h & 0x40) { const loc = h & 0xF, dev = h & 0x20; i++; const le = b[i++] === 0; const g = le ? dv.getUint16(i, true) : dv.getUint16(i, false); i += 2; const nf = b[i++]; const fs = []; for (let k = 0; k < nf; k++) { fs.push([b[i], b[i + 1], b[i + 2] & 0x1F]); i += 3; } let dsz = 0; if (dev) { const nd = b[i++]; for (let k = 0; k < nd; k++) { dsz += b[i + 1]; i += 3; } } defs[loc] = {g, le, fs, dsz}; continue; }
+    const d = defs[h & 0xF]; if (!d) throw new Error('bad'); const v = readMsg(d); if (v[253] !== undefined) lastTs = v[253]; take(d.g, v);
+  }
+  function readMsg(d) { const v = {}; d.fs.forEach(([num, size, bt]) => { const es = SZ[bt] || 1; if (size === es && i + size <= b.length) { const x = rd(i, bt, d.le); if (x !== null && x !== INV[bt]) v[num] = x; } i += size; }); i += d.dsz; return v; }
+  function take(g, v) { if (g === 18) sess.push(v); else if (g === 20) recs.push(v); }
+  return {sess, recs};
+}
+function fitSummary(f) {
+  const S2 = f.sess[0] || {}, R = f.recs.filter((r) => r[253] !== undefined).sort((a, c) => a[253] - c[253]);
+  const out = {};
+  const t0 = S2[2] || (R[0] && R[0][253]); if (t0) out.start = new Date((t0 + 631065600) * 1000);
+  out.sport = S2[5]; out.sub = S2[6];
+  let mov = 0, asc = 0, dsc = 0, lastAlt = null, wsum = 0, wt = 0, psum = 0, pn = 0, hs = 0, hn = 0, hmax = 0, cs = 0, cn = 0; const pw1 = [];
+  for (let k = 0; k < R.length; k++) {
+    const r = R[k], dt = k ? Math.min(5, r[253] - R[k - 1][253]) : 1; const spd = r[73] !== undefined ? r[73] / 1000 : (r[6] !== undefined ? r[6] / 1000 : null);
+    const moving = (spd !== null ? spd > 0.6 : false) || (r[7] > 0); if (moving && k) mov += dt;
+    const alt = r[78] !== undefined ? r[78] / 5 - 500 : (r[2] !== undefined ? r[2] / 5 - 500 : null);
+    if (alt !== null) { if (lastAlt === null) lastAlt = alt; else if (Math.abs(alt - lastAlt) >= 2) { if (alt > lastAlt) asc += alt - lastAlt; else dsc += lastAlt - alt; lastAlt = alt; } }
+    if (r[7] !== undefined) { psum += r[7]; pn++; wsum += r[7] * dt; wt += dt; for (let q = 0; q < Math.max(1, dt); q++) pw1.push(r[7]); }
+    if (r[3]) { hs += r[3]; hn++; if (r[3] > hmax) hmax = r[3]; }
+    if (r[4] && r[4] > 0) { cs += r[4]; cn++; }
+  }
+  let np = null; if (pw1.length >= 60) { let acc = 0, run = 0; const q = []; let n4 = 0; for (let k = 0; k < pw1.length; k++) { q.push(pw1[k]); run += pw1[k]; if (q.length > 30) run -= q.shift(); if (q.length === 30) { acc += Math.pow(run / 30, 4); n4++; } } if (n4) np = Math.round(Math.pow(acc / n4, 0.25)); }
+  const lastD = R.length ? (R[R.length - 1][5] || 0) / 100 : 0;
+  out.min = S2[8] ? Math.round(S2[8] / 1000 / 60) : (mov ? Math.round(mov / 60) : (S2[7] ? Math.round(S2[7] / 1000 / 60) : null));
+  out.km = S2[9] ? Math.round(S2[9] / 100 / 100) / 10 : (lastD ? Math.round(lastD / 100) / 10 : null);
+  out.dp = S2[22] !== undefined ? S2[22] : (asc ? Math.round(asc) : null);
+  out.dm = S2[23] !== undefined ? S2[23] : (dsc ? Math.round(dsc) : null);
+  out.wavg = S2[20] || (pn ? Math.round(psum / pn) : null);
+  out.np = S2[34] || np;
+  const vms = S2[124] !== undefined ? S2[124] / 1000 : (S2[14] !== undefined ? S2[14] / 1000 : (out.km && out.min ? out.km * 1000 / (out.min * 60) : null));
+  out.v = vms ? Math.round(vms * 3.6 * 10) / 10 : null;
+  out.cad = S2[18] || (cn ? Math.round(cs / cn) : null);
+  out.hra = S2[16] || (hn ? Math.round(hs / hn) : null);
+  out.hrm = S2[17] || hmax || null;
+  out.kj = S2[48] ? Math.round(S2[48] / 1000) : (wt ? Math.round(wsum / 1000) : null);
+  out.tss = S2[35] ? Math.round(S2[35] / 10) : null;
+  return out;
+}
 function manForm(d, r) {
   let ov = $('man-ov'); if (ov) ov.remove();
   ov = document.createElement('div'); ov.id = 'man-ov'; ov.className = 'modal-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
@@ -1317,6 +1388,23 @@ function manForm(d, r) {
   MAN_F.forEach(([k, lab, u, mn, mx, stp]) => { const l = document.createElement('label'); l.className = 'field'; const sp = document.createElement('span'); sp.textContent = lab + (u ? ` (${u})` : ''); const i2 = mkNum('—', mn, mx, stp, sp0[k]); l.append(sp, i2); grid.appendChild(l); NUM[k] = i2; });
   const hint = document.createElement('p'); hint.className = 'muted'; hint.style.margin = '4px 0 0'; hint.textContent = 'Compila solo quello che hai: serve il tempo in movimento. Se non metti il TSS, lo calcolo dai watt normalizzati (o medi) e dal tuo FTP.'; spBox.appendChild(hint);
   const tn = document.createElement('input'); tn.type = 'text'; tn.maxLength = 60; tn.placeholder = 'es. uscita di gruppo'; tn.value = m0.n || ''; field('Nota (facoltativa)', tn);
+  const imp = document.createElement('div'); imp.className = 'fitimp'; imp.innerHTML = '<input type="file" id="fitfile" hidden><button type="button" class="btn ghost" id="fit-btn">Importa file .fit dal ciclocomputer</button><p class="muted" id="fit-msg" style="margin:6px 0 0">Garmin, Karoo, Wahoo, Strava: anche lo .zip di «Esporta originale». Il file resta sul telefono.</p>';
+  body.insertBefore(imp, body.firstChild);
+  const fin = imp.querySelector('#fitfile'), fmsg = imp.querySelector('#fit-msg');
+  imp.querySelector('#fit-btn').addEventListener('click', () => fin.click());
+  fin.addEventListener('change', async () => {
+    const file = fin.files && fin.files[0]; if (!file) return; fmsg.className = 'muted'; fmsg.textContent = 'Leggo il file…';
+    try {
+      let buf = await file.arrayBuffer(); const u = new Uint8Array(buf); if (u[0] === 0x50 && u[1] === 0x4B) buf = await unzipFit(buf);
+      const x = fitSummary(parseFit(buf)); if (!x.min) throw new Error('vuoto');
+      st.value = x.sport === 1 ? 'corsa' : ((x.sport === 2 || x.sport === undefined) ? ((x.sub === 6 || x.sub === 58) ? 'rulli' : 'fuori') : 'altro');
+      si.value = 'spec'; sync(); ih.value = Math.floor(x.min / 60); im.value = x.min % 60;
+      MAN_F.forEach(([k]) => { NUM[k].value = x[k] !== null && x[k] !== undefined ? String(x[k]) : ''; });
+      const dd = x.start ? iso(Date.UTC(x.start.getFullYear(), x.start.getMonth(), x.start.getDate())) : null;
+      fmsg.className = 'ok'; fmsg.textContent = 'Importato' + (x.start ? `: uscita del ${it(dd)} alle ${String(x.start.getHours()).padStart(2, '0')}:${String(x.start.getMinutes()).padStart(2, '0')}` : '') + '. Controlla i dati e premi Salva.' + (dd && dd !== dDay ? ` Attenzione: il file non è del ${it(dDay)}.` : '') + (x.tss ? '' : ' Il TSS lo calcolo dai watt normalizzati.');
+    } catch (e) { fmsg.className = 'bad'; fmsg.textContent = /zipmeth/.test(e.message) ? 'Questo .zip non si apre qui: estrai il file .fit e importa quello.' : 'Non riesco a leggere il file: serve un .fit di un’attività (o lo .zip che lo contiene).'; }
+    fin.value = '';
+  });
   const sync = () => { const spec = si.value === 'spec'; spBox.hidden = !spec; sh.closest('label').hidden = spec; };
   si.addEventListener('change', sync); sync();
   const close = () => { ov.remove(); document.body.classList.remove('modal-open'); };
