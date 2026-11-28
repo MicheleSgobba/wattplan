@@ -1,0 +1,20 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//WattPlan//IT
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:wattplan-ore-settimanale@wattplan
+DTSTAMP:20261128T120000Z
+DTSTART:20261130T073000
+DURATION:PT15M
+RRULE:FREQ=WEEKLY;BYDAY=MO
+SUMMARY:WattPlan · quanto tempo hai questa settimana?
+DESCRIPTION:Apri WattPlan e scegli le ore di ogni giorno: il piano della settimana si adatta.\nhttps://michelesgobba.github.io/wattplan/
+URL:https://michelesgobba.github.io/wattplan/
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:PT0M
+DESCRIPTION:WattPlan · quanto tempo hai questa settimana?
+END:VALARM
+END:VEVENT
+END:VCALENDAR
