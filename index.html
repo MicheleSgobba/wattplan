@@ -383,13 +383,16 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 .dlopt b{font-size:16px}
 .dlopt span{font-size:13px;color:var(--muted)}
 .dlopt:active{transform:scale(.98)}
+.zwo-help .hl{margin:10px 0 2px}
+.dlstep{margin:0;font-weight:700;font-size:14px;color:var(--muted)}
+.dlopt:disabled{opacity:.45;cursor:default}
 </style>
 </head>
 <body>
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.35 · 28/11/2026)</p>
+<p class="ver" id="ver">(versione 1.36 · 28/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -517,29 +520,27 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="ogw"><button type="button" class="btn ghost" id="ogw-btn">Ore di questa settimana</button> <span class="muted" id="ogw-tag"></span><div id="ogw-box" hidden><div class="ogedit" id="ogw-ed"></div><div class="form"><button type="button" class="btn" id="ogw-ok">Salva per questa settimana</button><button type="button" class="btn ghost" id="ogw-reset">Torna alle ore abituali</button></div></div></div>
 <p><b>Obiettivo della settimana:</b> <span id="w-focus">—</span></p>
 <div class="days">
-<div class="day" id="day-lun"><b>Lunedì <span class="ddate" id="dd-lun"></span> <span id="dh-lun"></span></b><span id="d-lun">—</span><div class="pesobox" id="pz-lun" hidden></div><button type="button" class="btn ghost zwo" data-d="lun" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="lun" hidden>Scarica .fit (Garmin, Karoo)</button><button type="button" class="btn ghost dlb" data-d="lun" hidden>⬇ Scarica l’allenamento</button><div class="act" id="act-lun"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-lun"></div></details></div>
-<div class="day" id="day-mar"><b>Martedì <span class="ddate" id="dd-mar"></span> <span id="dh-mar"></span></b><span id="d-mar">—</span><div class="pesobox" id="pz-mar" hidden></div><button type="button" class="btn ghost zwo" data-d="mar" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="mar" hidden>Scarica .fit (Garmin, Karoo)</button><button type="button" class="btn ghost dlb" data-d="mar" hidden>⬇ Scarica l’allenamento</button><div class="act" id="act-mar"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-mar"></div></details></div>
-<div class="day" id="day-mer"><b>Mercoledì <span class="ddate" id="dd-mer"></span> <span id="dh-mer"></span></b><span id="d-mer">—</span><div class="pesobox" id="pz-mer" hidden></div><button type="button" class="btn ghost zwo" data-d="mer" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="mer" hidden>Scarica .fit (Garmin, Karoo)</button><button type="button" class="btn ghost dlb" data-d="mer" hidden>⬇ Scarica l’allenamento</button><div class="act" id="act-mer"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-mer"></div></details></div>
-<div class="day" id="day-gio"><b>Giovedì <span class="ddate" id="dd-gio"></span> <span id="dh-gio"></span></b><span id="d-gio">—</span><div class="pesobox" id="pz-gio" hidden></div><button type="button" class="btn ghost zwo" data-d="gio" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="gio" hidden>Scarica .fit (Garmin, Karoo)</button><button type="button" class="btn ghost dlb" data-d="gio" hidden>⬇ Scarica l’allenamento</button><div class="act" id="act-gio"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-gio"></div></details></div>
-<div class="day" id="day-ven"><b>Venerdì <span class="ddate" id="dd-ven"></span> <span id="dh-ven"></span></b><span id="d-ven">—</span><div class="pesobox" id="pz-ven" hidden></div><button type="button" class="btn ghost zwo" data-d="ven" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="ven" hidden>Scarica .fit (Garmin, Karoo)</button><button type="button" class="btn ghost dlb" data-d="ven" hidden>⬇ Scarica l’allenamento</button><div class="act" id="act-ven"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-ven"></div></details></div>
-<div class="day" id="day-sab"><b>Sabato <span class="ddate" id="dd-sab"></span> <span id="dh-sab"></span></b><span id="d-sab">—</span><div class="pesobox" id="pz-sab" hidden></div><button type="button" class="btn ghost zwo" data-d="sab" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="sab" hidden>Scarica .fit (Garmin, Karoo)</button><button type="button" class="btn ghost dlb" data-d="sab" hidden>⬇ Scarica l’allenamento</button><div class="act" id="act-sab"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-sab"></div></details></div>
-<div class="day" id="day-dom"><b>Domenica <span class="ddate" id="dd-dom"></span> <span id="dh-dom"></span></b><span id="d-dom">—</span><div class="pesobox" id="pz-dom" hidden></div><button type="button" class="btn ghost zwo" data-d="dom" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="dom" hidden>Scarica .fit (Garmin, Karoo)</button><button type="button" class="btn ghost dlb" data-d="dom" hidden>⬇ Scarica l’allenamento</button><div class="act" id="act-dom"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-dom"></div></details></div>
+<div class="day" id="day-lun"><b>Lunedì <span class="ddate" id="dd-lun"></span> <span id="dh-lun"></span></b><span id="d-lun">—</span><div class="pesobox" id="pz-lun" hidden></div><button type="button" class="btn ghost zwo" data-d="lun" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="lun" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-lun"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-lun"></div></details></div>
+<div class="day" id="day-mar"><b>Martedì <span class="ddate" id="dd-mar"></span> <span id="dh-mar"></span></b><span id="d-mar">—</span><div class="pesobox" id="pz-mar" hidden></div><button type="button" class="btn ghost zwo" data-d="mar" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="mar" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-mar"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-mar"></div></details></div>
+<div class="day" id="day-mer"><b>Mercoledì <span class="ddate" id="dd-mer"></span> <span id="dh-mer"></span></b><span id="d-mer">—</span><div class="pesobox" id="pz-mer" hidden></div><button type="button" class="btn ghost zwo" data-d="mer" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="mer" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-mer"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-mer"></div></details></div>
+<div class="day" id="day-gio"><b>Giovedì <span class="ddate" id="dd-gio"></span> <span id="dh-gio"></span></b><span id="d-gio">—</span><div class="pesobox" id="pz-gio" hidden></div><button type="button" class="btn ghost zwo" data-d="gio" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="gio" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-gio"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-gio"></div></details></div>
+<div class="day" id="day-ven"><b>Venerdì <span class="ddate" id="dd-ven"></span> <span id="dh-ven"></span></b><span id="d-ven">—</span><div class="pesobox" id="pz-ven" hidden></div><button type="button" class="btn ghost zwo" data-d="ven" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="ven" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-ven"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-ven"></div></details></div>
+<div class="day" id="day-sab"><b>Sabato <span class="ddate" id="dd-sab"></span> <span id="dh-sab"></span></b><span id="d-sab">—</span><div class="pesobox" id="pz-sab" hidden></div><button type="button" class="btn ghost zwo" data-d="sab" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="sab" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-sab"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-sab"></div></details></div>
+<div class="day" id="day-dom"><b>Domenica <span class="ddate" id="dd-dom"></span> <span id="dh-dom"></span></b><span id="d-dom">—</span><div class="pesobox" id="pz-dom" hidden></div><button type="button" class="btn ghost zwo" data-d="dom" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="dom" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-dom"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-dom"></div></details></div>
 </div>
 <div class="daykey"><span><i style="background:linear-gradient(90deg,#ff5a1f,#ff9b3d)"></i>Qualità</span><span><i style="background:linear-gradient(90deg,#4f7cff,#00b8a9)"></i>Lungo</span><span><i style="background:#a259ff"></i>Forza</span><span><i style="background:#00b8a9"></i>Z2 e recupero</span><span><i style="background:var(--line)"></i>Riposo</span></div>
-<div class="tpw"><button type="button" class="btn" id="tp-week">Scarica la settimana per TrainingPeaks</button> <span class="muted" id="tp-n"></span></div>
-<details class="zwo-help"><summary>Come caricare la settimana su TrainingPeaks</summary><ul>
+<div class="tpw"><button type="button" class="btn" id="dl-all">⬇ Scarica gli allenamenti</button><button type="button" id="tp-week" hidden></button><span class="muted" id="tp-n"></span></div>
+<details class="zwo-help"><summary>Come caricare i file (Zwift, Garmin, Karoo, TrainingPeaks)</summary><p class="hl"><b>TrainingPeaks (settimana)</b></p><ul>
 <li>Il pulsante scarica un file .zip con un allenamento .zwo per ogni seduta in bici della settimana selezionata, lungo compreso. La forza non ha file.</li>
 <li>Apri lo .zip (su iPhone basta toccarlo nell’app File) e tieni i file .zwo.</li>
 <li>Su trainingpeaks.com, nella Workout Library, tocca ⋮ accanto a una cartella › <b>Import Workout</b> e seleziona tutti i file insieme.</li>
 <li>Poi trascina ogni allenamento sul suo giorno nel calendario: il nome inizia con giorno e data, per esempio «Mar 01/12».</li>
 <li>Le intensità sono in % dell’FTP: in TrainingPeaks imposta lo stesso FTP di WattPlan, altrimenti i watt non tornano.</li>
-</ul></details>
-<details class="zwo-help"><summary>Come caricare il file .zwo su Zwift o MyWhoosh</summary><ul>
+</ul><p class="hl"><b>Zwift e MyWhoosh (.zwo)</b></p><ul>
 <li><b>Zwift</b>: da computer copia il file in Documenti › Zwift › Workouts › la cartella col tuo numero Zwift, poi riavvia Zwift: lo trovi in Allenamenti › Custom Workouts e si sincronizza anche su telefono, tablet e Apple TV.</li>
 <li><b>MyWhoosh</b>: apri workout.mywhoosh.com, accedi, carica il file e premi “Export to MyWhoosh”: compare nella cartella MyWorkout dell’app (se l’app era aperta, riavviala).</li>
 <li>Le intensità sono in % dell’FTP: imposta nell’app lo stesso FTP che usi qui per i rulli (<span id="zwo-ftp">—</span> W). La forza non ha file.</li>
-</ul></details>
-<details class="zwo-help"><summary>Come caricare il file .fit su Garmin o Hammerhead</summary><ul>
+</ul><p class="hl"><b>Garmin e Hammerhead Karoo (.fit)</b></p><ul>
 <li><b>Garmin Edge</b>: collega il Garmin al computer con il cavo, copia il file nella cartella Garmin › NewFiles e scollegalo: lo trovi in Allenamento › Allenamenti. Su Mac serve un programma come OpenMTP. In alternativa importalo su Garmin Connect (Allenamento e pianificazione › Allenamenti) e invialo al dispositivo.</li>
 <li><b>Hammerhead Karoo</b>: apri dashboard.hammerhead.io, vai in Workouts › Add Workout e carica il file: arriva sul Karoo alla prima connessione a internet.</li>
 <li>Nel file i watt sono già scritti in numeri: il lungo usa l’FTP all’aperto (<span id="fit-out">—</span> W), le sedute sui rulli quello dei rulli (<span id="fit-in">—</span> W). Dopo un nuovo test FTP scarica di nuovo il file.</li>
@@ -708,7 +709,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.35 · 28/11/2026';
+const APP_VER = '1.36 · 28/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -2202,7 +2203,7 @@ function weekZwo() {
   });
   return out;
 }
-function tpCount() { const n = S.configured && S.rows ? weekZwo().length : 0; $('tp-n').textContent = n ? `${n} allenamenti in bici` : 'nessun allenamento in bici questa settimana'; $('tp-week').disabled = !n; }
+function tpCount() { const n = S.configured && S.rows ? weekZwo().length : 0; $('tp-n').textContent = n ? `${n} allenamenti in bici questa settimana` : 'nessun allenamento in bici questa settimana'; }
 { const _r6 = render; render = function () { const x = _r6.apply(this, arguments); tpCount(); return x; }; const _s6 = select; select = function () { const x = _s6.apply(this, arguments); tpCount(); return x; }; if (S.configured) tpCount(); }
 $('tp-week').addEventListener('click', async () => {
   const r = row(); const files = weekZwo(); if (!r || !files.length) return;
@@ -2211,23 +2212,52 @@ $('tp-week').addEventListener('click', async () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
 });
 
-function dlForm(d) {
-  const r = row(); if (!r || (!ZWO[d] && !FIT[d])) return;
+
+function saveBlob(name, blob) { if (typeof saveFile === 'function') return saveFile(name, blob); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
+function dlFiles(days, fmt) {
+  const r = row(); const out = [];
+  if (fmt === 'tp') { weekZwo().forEach((f) => { const d = DOW.find((x) => f.name.includes('_' + GIORNI[x].toLowerCase().replace('ì', 'i') + '_')); if (days.includes(d)) out.push(f); }); return out; }
+  days.forEach((d) => {
+    if (fmt === 'zwo' && ZWO[d]) out.push({name: ZWO[d].file, data: toZwo(ZWO[d].steps, ZWO[d].name, ZWO[d].desc)});
+    if (fmt === 'fit' && FIT[d]) out.push({name: FIT[d].file, data: toFit(FIT[d].steps, FIT[d].name, FIT[d].ftp)});
+  });
+  return out;
+}
+function dlAll() {
+  const r = row(); if (!r) return;
   let ov = $('man-ov'); if (ov) ov.remove();
   ov = document.createElement('div'); ov.id = 'man-ov'; ov.className = 'modal-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
-  const dDay = iso(Date.parse(r.inizio) + DOW.indexOf(d) * DAY);
-  ov.innerHTML = `<div class="modal"><div class="modal-h"><b>Scarica · ${GIORNI[d]} ${it(dDay).slice(0, 5)}</b><button type="button" class="modal-x" aria-label="Chiudi">×</button></div><div class="modal-b"></div></div>`;
+  ov.innerHTML = `<div class="modal"><div class="modal-h"><b>Scarica · settimana ${r.n}</b><button type="button" class="modal-x" aria-label="Chiudi">×</button></div><div class="modal-b"></div></div>`;
   const body = ov.querySelector('.modal-b'); const close = () => { ov.remove(); document.body.classList.remove('modal-open'); };
-  const opt = (title, sub, cls) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'dlopt'; b.innerHTML = `<b>${title}</b><span>${sub}</span>`; b.addEventListener('click', () => { const src = document.querySelector(`.${cls}[data-d="${d}"]`); close(); if (src) src.click(); }); body.appendChild(b); };
-  if (ZWO[d]) opt('.zwo', 'Zwift e MyWhoosh, sui rulli. Watt in % del tuo FTP dei rulli.', 'zwo');
-  if (FIT[d]) opt('.fit', `Garmin, Hammerhead Karoo: fuori o sui rulli. Watt già in numeri (FTP ${FIT[d].ftp} W) e cadenza.`, 'fitb');
-  const hp = document.createElement('p'); hp.className = 'muted'; hp.style.margin = '2px 0 0'; hp.textContent = 'Come caricarli: guarda le istruzioni sotto la settimana.'; body.appendChild(hp);
+  const tpDays = new Set(weekZwo().map((f) => DOW.find((x) => f.name.includes('_' + GIORNI[x].toLowerCase().replace('ì', 'i') + '_'))));
+  const bikeDays = DOW.filter((d) => ZWO[d] || FIT[d] || tpDays.has(d));
+  const opt = (title, sub, fn, dis) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'dlopt'; b.innerHTML = `<b>${title}</b><span>${sub}</span>`; if (dis) b.disabled = true; b.addEventListener('click', fn); body.appendChild(b); return b; };
+  const hdr = (t) => { const h = document.createElement('p'); h.className = 'dlstep'; h.textContent = t; body.appendChild(h); };
+  const step1 = () => {
+    body.replaceChildren(); if (!bikeDays.length) { const p0 = document.createElement('p'); p0.className = 'muted'; p0.textContent = 'In questa settimana non ci sono allenamenti in bici da scaricare.'; body.appendChild(p0); return; }
+    hdr('1 · Cosa vuoi scaricare?');
+    opt('Tutta la settimana', `${bikeDays.length} allenamenti in bici, in un file .zip`, () => step2(bikeDays));
+    bikeDays.forEach((d) => { const dd = iso(Date.parse(r.inizio) + DOW.indexOf(d) * DAY); opt(`${GIORNI[d]} ${it(dd).slice(0, 5)}`, watts(r.days[d], S.ftp).replace(/ · .*$/, '').slice(0, 70), () => step2([d])); });
+  };
+  const step2 = (days) => {
+    body.replaceChildren(); const one = days.length === 1; const dd = one ? iso(Date.parse(r.inizio) + DOW.indexOf(days[0]) * DAY) : null;
+    hdr(`2 · Formato per ${one ? GIORNI[days[0]].toLowerCase() + ' ' + it(dd).slice(0, 5) : 'tutta la settimana'}`);
+    const nZ = days.filter((d) => ZWO[d]).length, nF = days.filter((d) => FIT[d]).length, nT = days.filter((d) => tpDays.has(d)).length;
+    const go = (fmt) => { const files = dlFiles(days, fmt); if (!files.length) return; close();
+      if (files.length === 1) { const f = files[0]; const bl = new Blob([f.data], {type: typeof f.data === 'string' ? 'application/xml' : 'application/octet-stream'});
+        if (typeof saveFile === 'function' && fmt !== 'tp') { const src = document.querySelector(`.${fmt === 'zwo' ? 'zwo' : 'fitb'}[data-d="${days[0]}"]`); if (src) { src.click(); return; } }
+        saveBlob(f.name, bl); return; }
+      saveBlob(`WattPlan-S${String(r.n).padStart(2, '0')}-${r.inizio}-${fmt === 'tp' ? 'TrainingPeaks' : fmt}.zip`, zipStore(files)); };
+    opt('.zwo · Zwift, MyWhoosh', nZ ? `Sui rulli, watt in % del tuo FTP dei rulli${one ? '' : ` · ${nZ} file`}` : 'Non disponibile: è un’uscita all’aperto', () => go('zwo'), !nZ);
+    opt('.fit · Garmin, Hammerhead Karoo', `Fuori o sui rulli, watt in numeri e cadenza${one ? '' : ` · ${nF} file`}`, () => go('fit'), !nF);
+    opt('TrainingPeaks', `File .zwo da importare nella Workout Library, lungo compreso${one ? '' : ` · ${nT} file`}`, () => go('tp'), !nT);
+    const back = document.createElement('button'); back.type = 'button'; back.className = 'btn ghost'; back.textContent = '‹ Indietro'; back.addEventListener('click', step1); body.appendChild(back);
+  };
+  step1();
   ov.querySelector('.modal-x').addEventListener('click', close); ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
   document.body.appendChild(ov); document.body.classList.add('modal-open');
 }
-document.querySelectorAll('.dlb').forEach((b) => b.addEventListener('click', () => dlForm(b.dataset.d)));
-function dlbSync() { document.querySelectorAll('.dlb').forEach((b) => { b.hidden = !(ZWO[b.dataset.d] || FIT[b.dataset.d]); }); }
-{ const _r7 = render; render = function () { const x = _r7.apply(this, arguments); dlbSync(); return x; }; const _s7 = select; select = function () { const x = _s7.apply(this, arguments); dlbSync(); return x; }; dlbSync(); }
+$('dl-all').addEventListener('click', dlAll);
 </script>
 <script>
 if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
