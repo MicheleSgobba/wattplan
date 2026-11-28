@@ -340,13 +340,15 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 .hrow b{white-space:nowrap}
 .ogw{margin:6px 0 12px}
 #ogw-tag{font-size:13px}
+.hrow.past{opacity:.5}
+.small-link{margin-top:10px;padding:6px 12px;font-size:12.5px}
 </style>
 </head>
 <body>
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.27 · 28/11/2026)</p>
+<p class="ver" id="ver">(versione 1.28 · 28/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -354,7 +356,7 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <p class="muted h-gen plan" hidden>Obiettivo generico: <b id="h-obj">—</b> · ciclo di <span id="h-ng">—</span> settimane dal <span class="h-ini">—</span> al <span class="h-fine">—</span> · lunghi fino a <span id="h-kmg">—</span> · terreno <span id="h-ter">—</span></p>
 <p class="test-alert plan" id="test-alert" hidden></p>
 </header>
-<div class="card fbk" id="ogb" hidden><b id="ogb-t"></b><p class="fbk-p">Scegli il tempo che hai giorno per giorno: il piano di questa settimana si adatta. «Come sempre» tiene le ore abituali.</p><div class="ogedit" id="ogb-ed"></div><div class="form"><button type="button" class="btn" id="ogb-ok">Conferma</button><button type="button" class="btn ghost" id="ogb-same">Come sempre</button></div><button type="button" class="btn ghost" id="ics-ore" style="margin-top:8px">Promemoria nel calendario: ogni lunedì alle 7:30</button></div>
+<div class="card fbk" id="ogb" hidden><b id="ogb-t"></b><p class="fbk-p" id="ogb-s"></p><div class="form" id="ogb-q"><button type="button" class="btn" id="ogb-same">Sì, come sempre</button><button type="button" class="btn ghost" id="ogb-chg">Cambia</button></div><div id="ogb-box" hidden><p class="fbk-p" id="ogb-past" hidden>I giorni già passati restano come sono: cambiano solo da oggi in poi.</p><div class="ogedit" id="ogb-ed"></div><div class="form"><button type="button" class="btn" id="ogb-ok">Conferma</button><button type="button" class="btn ghost" id="ogb-back">Annulla</button></div></div><button type="button" class="btn ghost small-link" id="ics-ore">Promemoria ogni lunedì alle 7:30 nel calendario</button></div>
 <div class="card fbk" id="fbk" hidden><b id="fbk-t"></b><p class="fbk-p">Bastano ore, fatica e, se lo sai, il TSS: il piano si adatta a come è andata.</p><div class="form"><button type="button" class="btn" id="fbk-go">Registrala</button><button type="button" class="btn ghost" id="fbk-no">Più tardi</button></div></div>
 
 <section class="card goal" id="obiettivo">
@@ -657,7 +659,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.27 · 28/11/2026';
+const APP_VER = '1.28 · 28/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -687,6 +689,17 @@ function slotsFor(og) {
   const slotOf = {}; if (lungoDay) slotOf[lungoDay] = 'sab';
   ['mar', 'gio', 'mer', 'ven', 'dom'].forEach((k) => { const free = avail.filter((d) => !slotOf[d]); if (!free.length) return; const d = free.includes(k) ? k : free.slice().sort((a, b) => og[b] - og[a] || DOW.indexOf(a) - DOW.indexOf(b))[0]; slotOf[d] = k; });
   avail.filter((d) => !slotOf[d]).forEach((d) => { slotOf[d] = 'rec'; });
+  return {slotOf, lungoDay, lungo_cap: lungoDay ? og[lungoDay] : 0};
+}
+function slotsPartial(fix, og, past) {
+  const slotOf = {}; past.forEach((d) => { if (fix[d]) slotOf[d] = fix[d]; });
+  const used = new Set(Object.values(slotOf)); const fut = DOW.filter((d) => !past.includes(d) && og[d] > 0);
+  const tieL = ['sab', 'dom', 'ven', 'gio', 'mer', 'mar', 'lun'];
+  let lungoDay = Object.keys(slotOf).find((d) => slotOf[d] === 'sab') || null;
+  if (!used.has('sab')) fut.forEach((d) => { if (slotOf[d]) return; if (!lungoDay || (!past.includes(lungoDay) && (og[d] > og[lungoDay] || (og[d] === og[lungoDay] && tieL.indexOf(d) < tieL.indexOf(lungoDay))))) lungoDay = d; });
+  if (lungoDay) slotOf[lungoDay] = 'sab';
+  ['mar', 'gio', 'mer', 'ven', 'dom'].filter((k) => !used.has(k)).forEach((k) => { const free = fut.filter((d) => !slotOf[d]); if (!free.length) return; const d = free.includes(k) ? k : free.slice().sort((a, b) => og[b] - og[a] || DOW.indexOf(a) - DOW.indexOf(b))[0]; slotOf[d] = k; });
+  fut.filter((d) => !slotOf[d]).forEach((d) => { slotOf[d] = 'rec'; });
   return {slotOf, lungoDay, lungo_cap: lungoDay ? og[lungoDay] : 0};
 }
 const validOg = (o) => !!o && typeof o === 'object' && DOW.every((d) => typeof o[d] === 'number' && o[d] >= 0 && o[d] <= 8);
@@ -782,7 +795,8 @@ function adattato(p, reg) {
     const id = 'w' + String(i + 1).padStart(2, '0');
     const lh = w.lungo_h;
     const md = MODS[p.inizio_piano + '_' + id] || {}; const inRientro = rientro; rientro = false;
-    const ogW = validOg(md.og) ? md.og : p.og; const SL = ogW === p.og ? {slotOf: p.slotOf, lungo_cap: p.lungo_cap} : slotsFor(ogW);
+    const ogW = validOg(md.og) ? md.og : p.og; const fixN = ogW !== p.og ? Math.max(0, Math.min(7, +md.fixN || 0)) : 0;
+    const SL = ogW === p.og ? {slotOf: p.slotOf, lungo_cap: p.lungo_cap} : (fixN ? slotsPartial(md.fix || {}, ogW, DOW.slice(0, fixN)) : slotsFor(ogW));
     let lungo = lh > 0 ? Math.round(Math.min(lh * f, SL.lungo_cap, p.disciplina === 'xc' ? 3 : 99) * 4) / 4 : 0;
     if (inRientro && lungo > 0) lungo = Math.max(1, Math.round(lungo * 0.7 * 4) / 4);
     const lungo_km = lh > 0 ? Math.round(p.km * lungo / p.durata_h / 5) * 5 : 0;
@@ -826,6 +840,7 @@ function adattato(p, reg) {
       const why = (md.skip || {})[d];
       if (why && MOT[why] && !/^Riposo/.test(days[d])) { if (/^(Lungo|Gravel|PROVA|MTB)/.test(days[d]) || /×|TEST|soglia|VO2/.test(days[d])) keySkip = true; days[d] = `Saltato (${MOT[why]})`; delete mins[d]; skip[d] = why; if (why !== 'tempo') injured = true; }
     });
+    if (ogW !== p.og) { const have = Object.values(SL.slotOf); const NAMES = {sab: 'il lungo', mar: 'la qualità del martedì', gio: 'la seconda seduta di qualità', mer: p.forza ? 'la forza del mercoledì' : 'il Z2 del mercoledì', ven: 'la seduta del venerdì', dom: 'il Z2 della domenica'}; const lost = Object.values(p.slotOf).filter((k) => k !== 'rec' && !have.includes(k)); if (lost.length) extra.push(`Con le ore di questa settimana non trovano posto: ${lost.map((k) => NAMES[k] || k).join(', ')}.`); }
     const ALT = md.alt || {}; let nAlt = 0, testAlt = false; const alt = {}, altOrig = {}, altFrom = {};
     const prio = (t) => /^(Lungo|Gravel|PROVA|MTB)/.test(t) ? 0 : (/TEST|×/.test(t) ? 1 : 2);
     const recBici = injured ? [] : DOW.filter((x) => skip[x] === 'tempo' && preSkip[x] && !/^(Riposo|Forza|Core|GARA)/.test(preSkip[x])).sort((a, b) => prio(preSkip[a]) - prio(preSkip[b]));
@@ -1823,35 +1838,48 @@ $('ics-btn').addEventListener('click', () => {
   else download('WattPlan-promemoria.ics', icsText());
 });
 
-function ogEditor(box, og) {
-  box.replaceChildren();
+function ogEditor(box, og, pastN) {
+  box.replaceChildren(); pastN = pastN || 0;
   DOW.forEach((d) => { const row = document.createElement('label'); row.className = 'hrow' + (og[d] > 0 ? '' : ' off'); const b = document.createElement('b'); b.textContent = d;
     const sl = document.createElement('select'); sl.dataset.d = d; sl.setAttribute('aria-label', 'Tempo ' + GIORNI[d]);
     const vals = ORE_OPT.slice(); if (og[d] > 0 && !vals.includes(og[d])) { vals.push(og[d]); vals.sort((a, c) => a - c); }
-    vals.forEach((h) => { const o = document.createElement('option'); o.value = String(h); o.textContent = oreLbl(h); sl.appendChild(o); }); sl.value = String(og[d] > 0 ? og[d] : 0);
+    vals.forEach((h) => { const o = document.createElement('option'); o.value = String(h); o.textContent = oreLbl(h); sl.appendChild(o); }); sl.value = String(og[d] > 0 ? og[d] : 0); if (DOW.indexOf(d) < pastN) { sl.disabled = true; row.classList.add('past'); row.title = 'Giorno già passato'; }
     sl.addEventListener('change', () => row.classList.toggle('off', !(+sl.value > 0)));
     row.append(b, sl); box.appendChild(row); });
   return () => { const o = {}; box.querySelectorAll('select').forEach((x) => { o[x.dataset.d] = +x.value || 0; }); return o; };
 }
 const sameOg = (a, b) => DOW.every((d) => (+a[d] || 0) === (+b[d] || 0));
-function setWeekOg(r, og) { const m = getMod(r); if (og && !sameOg(og, S.p.og)) m.og = og; else delete m.og; m.ogOk = true; saveMod(); }
+function weekIdx(r) { return Math.floor((oggiMs() - Date.parse(r.inizio)) / DAY); }
+function setWeekOg(r, og) {
+  const m = getMod(r); const idx = weekIdx(r); const target = og || S.p.og; const cur = r.og || S.p.og;
+  if (idx > 0 && idx < 7) {
+    const fix = {}; DOW.slice(0, idx).forEach((d) => { if (r.slotOf && r.slotOf[d]) fix[d] = r.slotOf[d]; });
+    const o = {}; DOW.forEach((d, j) => { o[d] = j < idx ? (+cur[d] || 0) : (+target[d] || 0); });
+    if (sameOg(o, S.p.og)) { delete m.og; delete m.fix; delete m.fixN; } else { m.og = o; m.fix = fix; m.fixN = idx; }
+  } else { if (sameOg(target, S.p.og)) delete m.og; else m.og = Object.assign({}, target); delete m.fix; delete m.fixN; }
+  m.ogOk = true; saveMod();
+}
 let ogbLater = false, ogbGet = null, ogbW = null;
 function ogbCheck() {
   const box = $('ogb'); ogbW = null;
   if (!S.configured || ogbLater || !S.rows || !S.rows.length || !S.cur) { box.hidden = true; return; }
   const o = oggiMs(); if (Date.parse(S.rows[0].inizio) > o || Date.parse(S.cur.inizio) + 7 * DAY <= o) { box.hidden = true; return; }
   if (S.cur.ogOk) { box.hidden = true; return; }
-  ogbW = S.cur; $('ogb-t').textContent = `Settimana ${S.cur.n} (dal ${it(S.cur.inizio)}): quanto tempo hai?`;
-  if (box.hidden || box.dataset.w !== S.cur.id) { ogbGet = ogEditor($('ogb-ed'), S.cur.og || S.p.og); box.dataset.w = S.cur.id; }
+  ogbW = S.cur; const og = S.p.og; const g = DOW.filter((d) => og[d] > 0);
+  $('ogb-t').textContent = `Settimana ${S.cur.n}: quanto tempo hai?`;
+  $('ogb-s').textContent = `Di solito ${num(g.reduce((t, d) => t + og[d], 0), 2)} h in ${g.length} giorni (${g.map((d) => d + ' ' + oreLbl(og[d])).join(', ')}).`;
+  if (box.dataset.w !== S.cur.id) { $('ogb-box').hidden = true; $('ogb-q').hidden = false; box.dataset.w = S.cur.id; }
   box.hidden = false;
 }
+$('ogb-chg').addEventListener('click', () => { if (!ogbW) return; const idx = Math.max(0, weekIdx(ogbW)); ogbGet = ogEditor($('ogb-ed'), ogbW.og || S.p.og, idx); $('ogb-past').hidden = !(idx > 0); $('ogb-box').hidden = false; $('ogb-q').hidden = true; });
+$('ogb-back').addEventListener('click', () => { $('ogb-box').hidden = true; $('ogb-q').hidden = false; });
 $('ogb-ok').addEventListener('click', () => { if (ogbW && ogbGet) { const o = ogbGet(); if (!DOW.some((d) => o[d] > 0) && !confirm('Nessun giorno disponibile: tutta la settimana diventa riposo. Confermi?')) return; setWeekOg(ogbW, o); } });
-$('ogb-same').addEventListener('click', () => { if (ogbW) setWeekOg(ogbW, null); });
+$('ogb-same').addEventListener('click', () => { if (ogbW) { const m = getMod(ogbW); m.ogOk = true; saveMod(); } });
 let ogwGet = null;
-function ogwRender() { if (!S.configured || !S.rows) return; const r = row(); if (!r) return; $('ogw-tag').textContent = r.ogCustom ? 'personalizzate: ' + num(DOW.reduce((t, d) => t + (r.og[d] || 0), 0), 2) + ' h' : ''; if (!$('ogw-box').hidden) ogwGet = ogEditor($('ogw-ed'), r.og || S.p.og); }
+function ogwRender() { if (!S.configured || !S.rows) return; const r = row(); if (!r) return; const wi = weekIdx(r); $('ogw-btn').hidden = wi >= 7; if (wi >= 7) $('ogw-box').hidden = true; $('ogw-tag').textContent = r.ogCustom ? 'personalizzate: ' + num(DOW.reduce((t, d) => t + (r.og[d] || 0), 0), 2) + ' h' : ''; if (!$('ogw-box').hidden) ogwGet = ogEditor($('ogw-ed'), r.og || S.p.og, Math.max(0, wi)); }
 $('ogw-btn').addEventListener('click', () => { const bx = $('ogw-box'); bx.hidden = !bx.hidden; ogwRender(); });
 $('ogw-ok').addEventListener('click', () => { const r = row(); if (r && ogwGet) { const o = ogwGet(); if (!DOW.some((d) => o[d] > 0) && !confirm('Nessun giorno disponibile: tutta la settimana diventa riposo. Confermi?')) return; setWeekOg(r, o); } });
-$('ogw-reset').addEventListener('click', () => { const r = row(); if (r) { const m = getMod(r); delete m.og; saveMod(); } });
+$('ogw-reset').addEventListener('click', () => { const r = row(); if (r) setWeekOg(r, null); });
 { const _r5 = render; render = function () { const x = _r5.apply(this, arguments); ogbCheck(); ogwRender(); return x; }; const _sel = select; select = function () { const x = _sel.apply(this, arguments); ogwRender(); return x; }; ogbCheck(); ogwRender(); }
 $('ics-ore').addEventListener('click', () => {
   if (/github\.io$/.test(location.hostname)) { location.href = 'promemoria-ore.ics'; return; }
