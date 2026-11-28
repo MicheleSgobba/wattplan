@@ -351,7 +351,7 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.30 · 28/11/2026)</p>
+<p class="ver" id="ver">(versione 1.31 · 28/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -670,7 +670,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.30 · 28/11/2026';
+const APP_VER = '1.31 · 28/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -713,6 +713,8 @@ function slotsPartial(fix, og, past) {
   fut.filter((d) => !slotOf[d]).forEach((d) => { slotOf[d] = 'rec'; });
   return {slotOf, lungoDay, lungo_cap: lungoDay ? og[lungoDay] : 0};
 }
+const MAN_T = {rulli: 'Bici sui rulli', fuori: 'Bici fuori', corsa: 'Corsa', palestra: 'Palestra', altro: 'Altro sport'};
+const MAN_I = {facile: 'facile (Z1–Z2)', media: 'media (Z3, tempo)', dura: 'dura (soglia o più)'};
 const validOg = (o) => !!o && typeof o === 'object' && DOW.every((d) => typeof o[d] === 'number' && o[d] >= 0 && o[d] <= 8);
 function profilo(r) {
   const modalita = r.modalita === 'generico' ? 'generico' : 'evento';
@@ -844,12 +846,12 @@ function adattato(p, reg) {
     const bikeFull = bike;
     const orig = {}, skip = {}, extra = [];
     (Array.isArray(md.moves) ? md.moves : []).forEach((m) => { if (!m || !DOW.includes(m.from) || !DOW.includes(m.to) || m.from === m.to) return; [days[m.from], days[m.to]] = [days[m.to], days[m.from]]; const a = mins[m.from], b = mins[m.to]; if (b === undefined) delete mins[m.from]; else mins[m.from] = b; if (a === undefined) delete mins[m.to]; else mins[m.to] = a; orig[m.to] = m.from; if (/^Riposo/.test(days[m.from])) delete orig[m.from]; else orig[m.from] = m.to; });
-    const MOT = {tempo: 'mancanza di tempo', infortunio: 'infortunio o dolore', malattia: 'malattia'};
+    const MOT = {tempo: 'mancanza di tempo', infortunio: 'infortunio o dolore', malattia: 'malattia', altro: 'sostituito con un tuo allenamento'};
     let injured = false, keySkip = false; const preSkip = Object.assign({}, days), preMins = Object.assign({}, mins);
     DOW.forEach((d) => {
       if (injured && !/^(Riposo|Saltato)/.test(days[d])) { days[d] = "Riposo, o 30–45' Z1 solo se non hai dolore né febbre"; delete mins[d]; skip[d] = 'auto'; return; }
       const why = (md.skip || {})[d];
-      if (why && MOT[why] && !/^Riposo/.test(days[d])) { if (/^(Lungo|Gravel|PROVA|MTB)/.test(days[d]) || /×|TEST|soglia|VO2/.test(days[d])) keySkip = true; days[d] = `Saltato (${MOT[why]})`; delete mins[d]; skip[d] = why; if (why !== 'tempo') injured = true; }
+      if (why && MOT[why] && !/^Riposo/.test(days[d])) { if (why !== 'altro' && (/^(Lungo|Gravel|PROVA|MTB)/.test(days[d]) || /×|TEST|soglia|VO2/.test(days[d]))) keySkip = true; days[d] = `Saltato (${MOT[why]})`; delete mins[d]; skip[d] = why; if (why !== 'tempo' && why !== 'altro') injured = true; }
     });
     if (ogW !== p.og) { const have = Object.values(SL.slotOf); const NAMES = {sab: 'il lungo', mar: 'la qualità del martedì', gio: 'la seconda seduta di qualità', mer: p.forza ? 'la forza del mercoledì' : 'il Z2 del mercoledì', ven: 'la seduta del venerdì', dom: 'il Z2 della domenica'}; const lost = Object.values(p.slotOf).filter((k) => k !== 'rec' && !have.includes(k)); if (lost.length) extra.push(`Con le ore di questa settimana non trovano posto: ${lost.map((k) => NAMES[k] || k).join(', ')}.`); }
     const ALT = md.alt || {}; let nAlt = 0, testAlt = false; const alt = {}, altOrig = {}, altFrom = {};
@@ -874,6 +876,10 @@ function adattato(p, reg) {
     });
     if (testAlt) extra.push('Il test FTP è stato sostituito: rifallo appena sei riposato, i watt delle prossime settimane si basano ancora sul vecchio FTP.');
     if (nAlt >= 2) extra.push('Due o più sedute alleggerite questa settimana: se la stanchezza continua, dormi di più, mangia di più e valuta di anticipare la settimana di scarico.');
+    const MAN = md.man || {}; const man = {};
+    if (!injured) DOW.forEach((d) => { const m = MAN[d]; if (!m || !MAN_T[m.t] || !(m.h > 0)) return; const bk = m.t === 'rulli' || m.t === 'fuori';
+      days[d] = `Tuo: ${m.h >= 1 ? fmtH(m.h) : Math.round(m.h * 60) + "'"} ${MAN_T[m.t].toLowerCase()} · ${MAN_I[m.i] || MAN_I.facile}` + (m.n ? ` · ${String(m.n).slice(0, 60)}` : '');
+      if (bk) mins[d] = Math.round(m.h * 60); else delete mins[d]; man[d] = m; });
     const isLong = (t) => /^(Lungo|Gravel|PROVA|MTB)/.test(t);
     bike = 0; fz = 0; DOW.forEach((d) => { const t = days[d]; if (/^Forza/.test(t)) fz += /leggera|ultima/.test(t) ? 0.75 : 1; else if (mins[d]) bike += mins[d] / 60; else if (isLong(t)) bike += lungo; });
     DOW.forEach((d) => { if (orig[d] && isLong(days[d]) && ogW[d] < lungo) extra.push(`Il lungo è finito ${GIORNI[d].toLowerCase()}, che ha meno ore disponibili: accorcialo.`); });
@@ -907,7 +913,7 @@ function adattato(p, reg) {
     let focus = w.focus;
     if (inRientro) focus = 'settimana di rientro, niente intensità e lungo accorciato. Poi ' + focus;
     if (p.modalita === 'generico' && i === lista.length - 1) focus += ' Fine ciclo: fai un test FTP, aggiornalo, imposta come inizio del piano il lunedì successivo e premi «Aggiorna il piano».';
-    return {id, n: i + 1, fase: w.fase, tipo: isTest(w) && w.tipo === 'Carico' ? 'Carico + test' : w.tipo, test: isTest(w), inizio: iso(t0 + i * 7 * DAY), focus, days, mins, orig, skip, alt, altOrig, altFrom, og: ogW, slotOf: SL.slotOf, ogCustom: ogW !== p.og, ogOk: !!md.ogOk, recBici: recBici.slice(), rientro: inRientro, ore_bici: ore, ore_forza: p.forza ? fz : 0, lungo_h: lungo, lungo_km, lungo_dplus, tss_piano: piano, tss_target: target, tss_reale: reale, stimato, aderenza: ader, nota: notaQui};
+    return {id, n: i + 1, fase: w.fase, tipo: isTest(w) && w.tipo === 'Carico' ? 'Carico + test' : w.tipo, test: isTest(w), inizio: iso(t0 + i * 7 * DAY), focus, days, mins, orig, skip, alt, altOrig, altFrom, man, og: ogW, slotOf: SL.slotOf, ogCustom: ogW !== p.og, ogOk: !!md.ogOk, recBici: recBici.slice(), rientro: inRientro, ore_bici: ore, ore_forza: p.forza ? fz : 0, lungo_h: lungo, lungo_km, lungo_dplus, tss_piano: piano, tss_target: target, tss_reale: reale, stimato, aderenza: ader, nota: notaQui};
   });
 }
 
@@ -1216,7 +1222,8 @@ function renderAct(d, r) {
   const mkB = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ghost' + (cls ? ' ' + cls : ''); b.textContent = label; b.addEventListener('click', fn); box.appendChild(b); return b; };
   const badge = (t, cls) => { const s2 = document.createElement('span'); s2.className = 'badge' + (cls ? ' ' + cls : ''); s2.textContent = t; box.appendChild(s2); };
   const t = r.days[d]; const sk = r.skip[d];
-  if (sk && sk !== 'auto') { badge('Saltato', 'sk'); mkB('Ripristina', '', () => { delete getMod(r).skip[d]; saveMod(); }); return; }
+  if (r.man && r.man[d]) { badge('Allenamento tuo'); mkB('Modifica', '', () => manForm(d, r, box)); mkB('Togli', '', () => { const m = getMod(r); if (m.man) delete m.man[d]; if (m.skip[d] === 'altro') delete m.skip[d]; saveMod(); }); return; }
+  if (sk && sk !== 'auto') { badge('Saltato', 'sk'); mkB('Ripristina', '', () => { delete getMod(r).skip[d]; saveMod(); }); if (sk === 'tempo') mkB('Inserisci un allenamento tuo', '', () => manForm(d, r, box)); return; }
   if (sk === 'auto') { badge('Riposo dopo infortunio', 'sk'); return; }
   if (r.orig[d]) { badge('Spostato da ' + GIORNI[r.orig[d]].toLowerCase()); mkB('Annulla spostamento', '', () => { const m = getMod(r); m.moves = m.moves.filter((x) => x.from !== d && x.to !== d); saveMod(); }); }
   const ALTL = {ridotta: 'Versione ridotta', z2: 'Solo Z2 facile', rec: 'Recupero attivo 45’', core: 'Solo core e mobilità', bici: 'Seduta in bici saltata'};
@@ -1244,11 +1251,24 @@ function renderAct(d, r) {
   });
   mkB('Salta', 'danger', () => {
     box.replaceChildren(); const sel2 = document.createElement('select'); sel2.setAttribute('aria-label', 'Motivo');
-    [['tempo', 'Mancanza di tempo'], ['infortunio', 'Infortunio o dolore'], ['malattia', 'Malattia']].forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; sel2.appendChild(o); });
+    [['tempo', 'Mancanza di tempo'], ['altro', 'Faccio un allenamento mio'], ['infortunio', 'Infortunio o dolore'], ['malattia', 'Malattia']].forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; sel2.appendChild(o); });
     box.appendChild(sel2);
-    mkB('Conferma', 'danger', () => { getMod(r).skip[d] = sel2.value; saveMod(); });
+    mkB('Conferma', 'danger', () => { if (sel2.value === 'altro') { manForm(d, r, box); return; } getMod(r).skip[d] = sel2.value; saveMod(); });
     mkB('Annulla', '', () => renderAct(d, r));
   });
+}
+function manForm(d, r, box) {
+  box.replaceChildren(); const m0 = (r.man && r.man[d]) || {t: 'fuori', h: 1, i: 'facile', n: ''};
+  const mkSel = (opts, val, lab) => { const s2 = document.createElement('select'); s2.setAttribute('aria-label', lab); opts.forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; s2.appendChild(o); }); s2.value = String(val); box.appendChild(s2); return s2; };
+  const head = document.createElement('p'); head.className = 'muted'; head.style.cssText = 'flex-basis:100%;margin:0 0 4px'; head.textContent = 'Il tuo allenamento al posto di quello del piano:'; box.appendChild(head);
+  const st = mkSel(Object.keys(MAN_T).map((k) => [k, MAN_T[k]]), m0.t, 'Tipo');
+  const sh = mkSel(ORE_OPT.filter((h) => h > 0).concat(ORE_OPT.includes(m0.h) ? [] : [m0.h]).sort((a, c) => a - c).map((h) => [h, oreLbl(h)]), m0.h, 'Durata');
+  const si = mkSel(Object.keys(MAN_I).map((k) => [k, MAN_I[k][0].toUpperCase() + MAN_I[k].slice(1)]), m0.i, 'Intensità');
+  const tn = document.createElement('input'); tn.type = 'text'; tn.maxLength = 60; tn.placeholder = 'Nota (facoltativa), es. uscita di gruppo'; tn.value = m0.n || ''; tn.style.flexBasis = '100%'; box.appendChild(tn);
+  const b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn'; b1.textContent = 'Salva'; box.appendChild(b1);
+  const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn ghost'; b2.textContent = 'Annulla'; box.appendChild(b2);
+  b1.addEventListener('click', () => { const m = getMod(r); m.man = m.man || {}; m.man[d] = {t: st.value, h: +sh.value, i: si.value, n: tn.value.trim()}; if (!m.skip[d]) m.skip[d] = 'altro'; saveMod(); });
+  b2.addEventListener('click', () => renderAct(d, r));
 }
 let alimDay = null;
 function dayKind(t, r) {
@@ -1599,6 +1619,7 @@ function fillDetails(d, raw, steps, r, f, target) {
   const h = (r.og || S.p.og)[d];
   if (/^Saltato/.test(raw)) { el('div', 'lbl', 'Cosa fare'); el('p', '', /infortunio|malattia/.test(raw) ? 'Fermati finché dolore o febbre non passano. Se durano più di qualche giorno, senti un medico o un fisioterapista prima di riprendere.' : 'Seduta saltata: non recuperarla nei giorni dopo, riprendi dal piano.'); return; }
   if (/^Riposo/.test(raw)) { el('div', 'lbl', 'Cosa fare'); el('p', '', h > 0 ? 'Giorno libero nel piano: se hai voglia, 20–30 minuti di camminata o mobilità.' : 'Riposo completo: dormi bene e mangia a sufficienza, è qui che il corpo si adatta.'); return; }
+  if (/^Tuo:/.test(raw)) { const m = (r.man || {})[d] || {}; el('div', 'lbl', 'Allenamento tuo'); el('p', '', (m.t === 'rulli' || m.t === 'fuori') ? 'Conta nelle ore in bici della settimana. Non ha file per Zwift o Garmin: tieni l’intensità che hai scelto e, se fai qualche tratto più duro, ricordati che domani conta.' : 'Non conta nelle ore in bici, ma stanca comunque: se è stato duro, il giorno dopo tienilo facile.'); el('p', 'muted', 'A fine settimana registra ore e fatica reali in «Com’è andata questa settimana»: il piano si adatta.'); return; }
   if (/^Forza/.test(raw)) {
     chips(['≈ ' + (/leggera|ultima/.test(raw) ? "45'" : '1h'), 'Palestra']);
     el('div', 'lbl', 'Scopo'); el('p', '', 'Forza e stabilità per spingere sui pedali e reggere le ore in sella senza mal di schiena.');
