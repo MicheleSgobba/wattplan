@@ -370,13 +370,19 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 .fitimp .btn{width:100%}
 .fitimp .ok{color:var(--accent);font-weight:600;margin:6px 0 0}
 .fitimp .bad{margin:6px 0 0}
+.donebox{margin:0 0 12px;padding:10px 14px;border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,var(--panel));border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line))}
+.donebox ul{margin:6px 0 0;padding-left:18px}
+.donebox p{margin:6px 0 0}
+.badge.okb{background:color-mix(in srgb,var(--accent) 18%,var(--panel));color:var(--accent)}
+.badge.midb{background:#fff3e0;color:#b45309}
+.btn.donebtn{border-color:var(--accent);color:var(--accent)}
 </style>
 </head>
 <body>
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.33 · 28/11/2026)</p>
+<p class="ver" id="ver">(versione 1.34 · 28/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -695,7 +701,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.33 · 28/11/2026';
+const APP_VER = '1.34 · 28/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -952,7 +958,7 @@ function adattato(p, reg) {
     let focus = w.focus;
     if (inRientro) focus = 'settimana di rientro, niente intensità e lungo accorciato. Poi ' + focus;
     if (p.modalita === 'generico' && i === lista.length - 1) focus += ' Fine ciclo: fai un test FTP, aggiornalo, imposta come inizio del piano il lunedì successivo e premi «Aggiorna il piano».';
-    return {id, n: i + 1, fase: w.fase, tipo: isTest(w) && w.tipo === 'Carico' ? 'Carico + test' : w.tipo, test: isTest(w), inizio: iso(t0 + i * 7 * DAY), focus, days, mins, orig, skip, alt, altOrig, altFrom, man, og: ogW, slotOf: SL.slotOf, ogCustom: ogW !== p.og, ogOk: !!md.ogOk, recBici: recBici.slice(), rientro: inRientro, ore_bici: ore, ore_forza: p.forza ? fz : 0, lungo_h: lungo, lungo_km, lungo_dplus, tss_piano: piano, tss_target: target, tss_reale: reale, stimato, aderenza: ader, nota: notaQui};
+    return {id, n: i + 1, fase: w.fase, tipo: isTest(w) && w.tipo === 'Carico' ? 'Carico + test' : w.tipo, test: isTest(w), inizio: iso(t0 + i * 7 * DAY), focus, days, mins, orig, skip, alt, altOrig, altFrom, man, done: md.done || {}, og: ogW, slotOf: SL.slotOf, ogCustom: ogW !== p.og, ogOk: !!md.ogOk, recBici: recBici.slice(), rientro: inRientro, ore_bici: ore, ore_forza: p.forza ? fz : 0, lungo_h: lungo, lungo_km, lungo_dplus, tss_piano: piano, tss_target: target, tss_reale: reale, stimato, aderenza: ader, nota: notaQui};
   });
 }
 
@@ -1261,6 +1267,7 @@ function renderAct(d, r) {
   const mkB = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ghost' + (cls ? ' ' + cls : ''); b.textContent = label; b.addEventListener('click', fn); box.appendChild(b); return b; };
   const badge = (t, cls) => { const s2 = document.createElement('span'); s2.className = 'badge' + (cls ? ' ' + cls : ''); s2.textContent = t; box.appendChild(s2); };
   const t = r.days[d]; const sk = r.skip[d];
+  if (r.done && r.done[d] && !(r.man && r.man[d]) && !sk) { const dn = r.done[d]; badge(dn.sc ? `Fatta · ${dn.sc}/10` : 'Fatta', dn.sc ? (dn.sc >= 7 ? 'okb' : dn.sc >= 5 ? 'midb' : 'sk') : 'okb'); mkB('Dati', '', () => doneForm(d, r)); mkB('Togli', '', () => { const m = getMod(r); if (m.done) delete m.done[d]; saveMod(); }); return; }
   if (r.man && r.man[d]) { badge('Allenamento tuo'); mkB('Modifica', '', () => manForm(d, r)); mkB('Togli', '', () => { const m = getMod(r); if (m.man) delete m.man[d]; if (m.skip[d] === 'altro') delete m.skip[d]; saveMod(); }); return; }
   if (sk && sk !== 'auto') { badge('Saltato', 'sk'); mkB('Ripristina', '', () => { delete getMod(r).skip[d]; saveMod(); }); if (sk === 'tempo') mkB('Inserisci un allenamento tuo', '', () => manForm(d, r)); return; }
   if (sk === 'auto') { badge('Riposo dopo infortunio', 'sk'); return; }
@@ -1268,6 +1275,7 @@ function renderAct(d, r) {
   const ALTL = {ridotta: 'Versione ridotta', z2: 'Solo Z2 facile', rec: 'Recupero attivo 45’', core: 'Solo core e mobilità', bici: 'Seduta in bici saltata'};
   if (r.alt && r.alt[d]) { badge(/^bici/.test(r.alt[d]) && r.altFrom && r.altFrom[d] ? `Alternativa: recupero della bici di ${GIORNI[r.altFrom[d]].toLowerCase()}` : 'Alternativa: ' + ALTL[r.alt[d]].toLowerCase()); if (r.altOrig && r.altOrig[d]) { const o = document.createElement('p'); o.className = 'muted'; o.style.margin = '4px 0'; o.style.flexBasis = '100%'; o.textContent = 'Nel piano: ' + watts(r.altOrig[d], {ftp_in: +memory.imp.ftp_in, ftp_out: +memory.imp.ftp_out}); box.appendChild(o); } mkB('Torna alla seduta del piano', '', () => { delete getMod(r).alt[d]; saveMod(); }); return; }
   if (/^Riposo/.test(t)) return;
+  if (FIT[d] && !/^(GARA|Tuo:)/.test(t)) mkB('Fatta? Importa i dati', 'donebtn', () => doneForm(d, r));
   mkB('Sposta', '', () => {
     box.replaceChildren(); const sel2 = document.createElement('select'); sel2.setAttribute('aria-label', 'Sposta in');
     DOW.filter((x) => x !== d).forEach((x) => { const o = document.createElement('option'); o.value = x; o.textContent = GIORNI[x] + (/^Riposo/.test(r.days[x]) ? ' (libero)' : ' (scambia)'); sel2.appendChild(o); });
@@ -1361,7 +1369,82 @@ function fitSummary(f) {
   out.hrm = S2[17] || hmax || null;
   out.kj = S2[48] ? Math.round(S2[48] / 1000) : (wt ? Math.round(wsum / 1000) : null);
   out.tss = S2[35] ? Math.round(S2[35] / 10) : null;
+  out.pw = pw1;
   return out;
+}
+
+function planOf(d) {
+  const z = FIT[d]; if (!z) return null; const flat = [];
+  z.steps.forEach((st) => { if (st.rep) for (let k = 0; k < st.rep; k++) st.items.forEach((x) => flat.push(x)); else flat.push(st); });
+  const T = flat.reduce((t, x) => t + x.d, 0); if (!T) return null;
+  const mid = (x) => (x.r[0] + x.r[1]) / 2; const ifp = Math.pow(flat.reduce((t, x) => t + x.d * Math.pow(mid(x), 4), 0) / T, 0.25);
+  const bands = {}; flat.filter((x) => x.i === 'active').forEach((x) => { const lo = Math.min(x.r[0], x.r[1]), hi = Math.max(x.r[0], x.r[1]); const tol = mid(x) < 0.76 ? 0.05 : 0.03; const k = lo.toFixed(2) + '-' + hi.toFixed(2); bands[k] = bands[k] || {lo: lo - tol, hi: hi + tol, sec: 0, work: mid(x) >= 0.76}; bands[k].sec += x.d; });
+  const bl = Object.values(bands); const workSec = bl.filter((b) => b.work).reduce((t, b) => t + b.sec, 0); const work = workSec >= 0.15 * T ? bl.filter((b) => b.work) : []; 
+  return {min: Math.round(T / 60), ifp: Math.round(ifp * 100) / 100, tss: Math.round(T / 3600 * ifp * ifp * 100), ftp: z.ftp, bands: work.length ? work : bl, work: !!work.length};
+}
+const fmtMin = (m) => m >= 60 ? `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}` : `${m}'`;
+function scoreDone(pl, sp, pw) {
+  const parts = []; const clamp = (x) => Math.max(0, Math.min(1, x));
+  if (sp.min) parts.push({k: 'dur', w: 0.25, v: clamp(1 - Math.abs(1 - sp.min / pl.min) / 0.5), txt: `Durata ${fmtMin(sp.min)} (prevista ${fmtMin(pl.min)})`});
+  const w = sp.np || sp.wavg; const ifa = w ? w / pl.ftp : null;
+  if (ifa) parts.push({k: 'if', w: 0.25, v: clamp(1 - Math.abs(ifa - pl.ifp) / 0.15), txt: `Intensità IF ${num(ifa, 2)} (prevista ${num(pl.ifp, 2)})`});
+  const tss = sp.tss || (ifa && sp.min ? Math.round(sp.min / 60 * ifa * ifa * 100) : null);
+  if (tss) parts.push({k: 'tss', w: 0.2, v: clamp(1 - Math.abs(1 - tss / pl.tss) / 0.5), txt: `TSS ${tss}${sp.tss ? '' : ' stimato'} (previsto ${pl.tss})`});
+  if (pw && pw.length > 120 && pl.bands.length) {
+    const win = pl.work ? 30 : 60; const roll = []; let run = 0; for (let k = 0; k < pw.length; k++) { run += pw[k]; if (k >= win) run -= pw[k - win]; roll.push(run / Math.min(k + 1, win)); }
+    let got = 0, need = 0; pl.bands.forEach((b) => { const lo = b.lo * pl.ftp, hi = b.hi * pl.ftp; let c = 0; roll.forEach((x) => { if (x >= lo && x <= hi) c++; }); got += Math.min(c, b.sec); need += b.sec; });
+    if (need) parts.push({k: 'zona', w: 0.3, v: clamp(got / need), txt: `${pl.work ? 'Tempo nei watt dei lavori' : 'Tempo nella zona prevista'}: ${Math.round(Math.min(1, got / need) * 100)}%`});
+  }
+  if (!parts.length) return null;
+  const W = parts.reduce((t, x) => t + x.w, 0); const v = parts.reduce((t, x) => t + x.w * x.v, 0) / W;
+  return {sc: Math.max(1, Math.min(10, Math.round(1 + 9 * v))), parts: parts.map((x) => ({txt: x.txt, pc: Math.round(x.v * 100)})), partial: !ifa};
+}
+const scLbl = (n) => n >= 9 ? 'come da piano' : n >= 7 ? 'buona' : n >= 5 ? 'in parte' : 'lontana dal piano';
+function doneForm(d, r) {
+  const pl = planOf(d); if (!pl) return;
+  let ov = $('man-ov'); if (ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'man-ov'; ov.className = 'modal-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+  const card = document.createElement('div'); card.className = 'modal'; ov.appendChild(card);
+  const old = (r.done && r.done[d]) || {}; const sp0 = old.sp || {}; let pw = null;
+  const dDay = iso(Date.parse(r.inizio) + DOW.indexOf(d) * DAY);
+  card.innerHTML = `<div class="modal-h"><b>Seduta fatta · ${GIORNI[d]} ${it(dDay).slice(0, 5)}</b><button type="button" class="modal-x" aria-label="Chiudi">×</button></div><div class="modal-b"></div><div class="modal-f"><p class="bad" id="man-err" hidden></p><div class="form"><button type="button" class="btn" id="man-save">Salva e valuta</button><button type="button" class="btn ghost" id="man-cancel">Annulla</button></div></div>`;
+  const body = card.querySelector('.modal-b');
+  const pv = document.createElement('p'); pv.className = 'muted'; pv.style.margin = '0'; pv.textContent = `Previsto: ${fmtMin(pl.min)} · IF ${num(pl.ifp, 2)} · TSS ${pl.tss} · FTP ${pl.ftp} W. ${watts(r.days[d], S.ftp).slice(0, 120)}`; body.appendChild(pv);
+  const imp = document.createElement('div'); imp.className = 'fitimp'; imp.innerHTML = '<input type="file" id="fitfile" hidden><button type="button" class="btn ghost" id="fit-btn">Importa file .fit dal ciclocomputer</button><p class="muted" id="fit-msg" style="margin:6px 0 0">Con il file confronto anche quanto tempo sei stato nei watt dei lavori.</p>'; body.appendChild(imp);
+  const spBox = document.createElement('div'); spBox.className = 'spbox'; body.appendChild(spBox);
+  const mkNum = (ph, min, max, step, val) => { const i2 = document.createElement('input'); i2.type = 'number'; i2.inputMode = step < 1 ? 'decimal' : 'numeric'; i2.min = min; i2.max = max; i2.step = step; i2.placeholder = ph; if (val !== undefined && val !== null && val !== '') i2.value = val; return i2; };
+  const tw = document.createElement('div'); tw.className = 'field'; tw.innerHTML = '<span>Tempo in movimento</span>'; const trow = document.createElement('div'); trow.className = 'trow';
+  const ih = mkNum('ore', 0, 12, 1, sp0.min ? Math.floor(sp0.min / 60) : ''), im = mkNum('min', 0, 59, 1, sp0.min ? sp0.min % 60 : '');
+  const lh = document.createElement('span'); lh.textContent = 'h'; const lm = document.createElement('span'); lm.textContent = 'min'; trow.append(ih, lh, im, lm); tw.appendChild(trow); spBox.appendChild(tw);
+  const NUM = {}; const grid = document.createElement('div'); grid.className = 'spgrid'; spBox.appendChild(grid);
+  MAN_F.forEach(([k, lab, u, mn, mx, stp]) => { const l = document.createElement('label'); l.className = 'field'; const sp = document.createElement('span'); sp.textContent = lab + (u ? ` (${u})` : ''); const i2 = mkNum('—', mn, mx, stp, sp0[k]); l.append(sp, i2); grid.appendChild(l); NUM[k] = i2; });
+  const hint = document.createElement('p'); hint.className = 'muted'; hint.style.margin = '4px 0 0'; hint.textContent = 'Per il voto servono almeno il tempo e i watt (normalizzati o medi). Senza file non posso controllare il tempo nei watt dei lavori.'; spBox.appendChild(hint);
+  const fin = imp.querySelector('#fitfile'), fmsg = imp.querySelector('#fit-msg');
+  imp.querySelector('#fit-btn').addEventListener('click', () => fin.click());
+  fin.addEventListener('change', async () => {
+    const file = fin.files && fin.files[0]; if (!file) return; fmsg.className = 'muted'; fmsg.textContent = 'Leggo il file…';
+    try { let buf = await file.arrayBuffer(); const u = new Uint8Array(buf); if (u[0] === 0x50 && u[1] === 0x4B) buf = await unzipFit(buf);
+      const x = fitSummary(parseFit(buf)); if (!x.min) throw new Error('vuoto'); pw = x.pw && x.pw.length ? x.pw : null;
+      ih.value = Math.floor(x.min / 60); im.value = x.min % 60; MAN_F.forEach(([k]) => { NUM[k].value = x[k] !== null && x[k] !== undefined ? String(x[k]) : ''; });
+      const dd = x.start ? iso(Date.UTC(x.start.getFullYear(), x.start.getMonth(), x.start.getDate())) : null;
+      fmsg.className = 'ok'; fmsg.textContent = 'Importato' + (x.start ? `: uscita del ${it(dd)}` : '') + '. Controlla e premi «Salva e valuta».' + (dd && dd !== dDay ? ` Attenzione: il file non è del ${it(dDay)}.` : '') + (pw ? '' : ' Il file non ha i watt secondo per secondo.');
+    } catch (e) { fmsg.className = 'bad'; fmsg.textContent = /zipmeth/.test(e.message) ? 'Questo .zip non si apre qui: estrai il file .fit e importa quello.' : 'Non riesco a leggere il file: serve un .fit di un’attività (o lo .zip che lo contiene).'; }
+    fin.value = '';
+  });
+  const close = () => { ov.remove(); document.body.classList.remove('modal-open'); };
+  card.querySelector('.modal-x').addEventListener('click', close); card.querySelector('#man-cancel').addEventListener('click', close);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  card.querySelector('#man-save').addEventListener('click', () => {
+    const err = card.querySelector('#man-err'); err.hidden = true; card.querySelectorAll('.err').forEach((x) => x.classList.remove('err'));
+    const hh = +ih.value || 0, mm = +im.value || 0; const bad = []; if (!(hh * 60 + mm > 0) || hh > 12 || mm > 59) { bad.push('tempo in movimento'); ih.classList.add('err'); im.classList.add('err'); }
+    const sp = {min: hh * 60 + mm}; MAN_F.forEach(([k, lab, u, mn, mx]) => { const v = NUM[k].value.trim(); if (v === '') return; const x = +v.replace(',', '.'); if (isNaN(x) || x < mn || x > mx) { bad.push(lab); NUM[k].classList.add('err'); } else sp[k] = x; });
+    if (bad.length) { err.textContent = 'Controlla: ' + bad.join(', ') + '.'; err.hidden = false; return; }
+    const res = scoreDone(pl, sp, pw) || {sc: null, parts: []};
+    if (!pw && old.zona && old.sp && old.sp.min === sp.min) { const z = old.parts && old.parts.find((x) => /Tempo nei|Tempo nella/.test(x.txt)); if (z) res.parts.push(z); }
+    const md = getMod(r); md.done = md.done || {}; md.done[d] = {sp, sc: res.sc, parts: res.parts, partial: !!res.partial, zona: !!pw || !!old.zona, pl: {min: pl.min, ifp: pl.ifp, tss: pl.tss}};
+    close(); saveMod();
+  });
+  document.body.appendChild(ov); document.body.classList.add('modal-open');
 }
 function manForm(d, r) {
   let ov = $('man-ov'); if (ov) ov.remove();
@@ -1768,6 +1851,11 @@ function noteFor(d, raw) {
 }
 function fillDetails(d, raw, steps, r, f, target) {
   const box = target || $('x-' + d); box.replaceChildren();
+  const dn = r.done && r.done[d]; if (dn && !(r.man && r.man[d])) { const bx = document.createElement('div'); bx.className = 'donebox'; const t = document.createElement('b'); t.textContent = dn.sc ? `Com’è andata: ${dn.sc}/10, ${scLbl(dn.sc)}` : 'Seduta fatta'; bx.appendChild(t);
+    const ul = document.createElement('ul'); (dn.parts || []).forEach((x) => { const li = document.createElement('li'); li.textContent = `${x.pc >= 80 ? '✓' : x.pc >= 50 ? '≈' : '✗'} ${x.txt}`; ul.appendChild(li); }); bx.appendChild(ul);
+    if (dn.partial) { const pp = document.createElement('p'); pp.className = 'muted'; pp.textContent = 'Voto parziale: senza watt valuto solo la durata.'; bx.appendChild(pp); }
+    else if (!dn.zona) { const pp = document.createElement('p'); pp.className = 'muted'; pp.textContent = 'Con il file .fit valuto anche il tempo passato nei watt dei lavori.'; bx.appendChild(pp); }
+    box.appendChild(bx); }
   const pn = noteFor(d, raw); if (pn.length) { const bx = document.createElement('div'); bx.className = 'pers'; const l = document.createElement('div'); l.className = 'lbl'; l.textContent = 'Nota personalizzata'; bx.appendChild(l); pn.forEach((t) => { const pp = document.createElement('p'); pp.textContent = t; bx.appendChild(pp); }); box.appendChild(bx); }
   const el = (tag, cls, text, parent) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; (parent || box).appendChild(e); return e; };
   const list = (title, items) => { el('div', 'lbl', title); const ul = el('ul'); items.forEach((i) => el('li', '', i, ul)); };
