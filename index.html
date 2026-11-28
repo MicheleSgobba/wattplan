@@ -345,13 +345,34 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 .tpw{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:12px 0 6px}
 .tpw .btn{width:100%;white-space:normal;line-height:1.25;text-align:center}
 #tp-n{font-size:13px;text-align:center}
+.modal-open{overflow:hidden}
+.modal-ov{position:fixed;inset:0;z-index:100;background:rgba(10,20,15,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+@media (min-width:640px){.modal-ov{align-items:center}}
+.modal{width:100%;max-width:560px;max-height:calc(100dvh - 24px);display:flex;flex-direction:column;background:var(--panel);border-radius:22px;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden}
+.modal-h{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.modal-h b{font-size:16px}
+.modal-x{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--panel2);font-size:22px;line-height:1;cursor:pointer;color:var(--text)}
+.modal-b{padding:12px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:10px}
+.modal-b .field{display:flex;flex-direction:column;gap:4px;margin:0}
+.modal-b .field>span{font-size:13px;color:var(--muted);font-weight:600}
+.modal-b input,.modal-b select{width:100%;font-size:16px}
+.modal-f{padding:10px 18px 16px;border-top:1px solid var(--line)}
+.modal-f .bad{margin:0 0 8px}
+.spbox{display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:var(--panel2);border:1px solid var(--line)}
+.spbox[hidden],.modal-b [hidden]{display:none!important}
+.modal-b .field{flex:none!important;min-height:0;width:auto}
+.trow{display:flex;align-items:center;gap:8px}
+.trow input{width:80px!important;flex:none}
+.spgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;align-items:end}
+.spgrid .field>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px!important}
+@media (prefers-reduced-motion: no-preference){.modal{animation:wpUp .28s cubic-bezier(.2,.8,.2,1) both}.modal-ov{animation:wpFadeOv .2s ease both}@keyframes wpFadeOv{from{opacity:0}to{opacity:1}}}
 </style>
 </head>
 <body>
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.31 · 28/11/2026)</p>
+<p class="ver" id="ver">(versione 1.32 · 28/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -670,7 +691,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.31 · 28/11/2026';
+const APP_VER = '1.32 · 28/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -714,7 +735,21 @@ function slotsPartial(fix, og, past) {
   return {slotOf, lungoDay, lungo_cap: lungoDay ? og[lungoDay] : 0};
 }
 const MAN_T = {rulli: 'Bici sui rulli', fuori: 'Bici fuori', corsa: 'Corsa', palestra: 'Palestra', altro: 'Altro sport'};
-const MAN_I = {facile: 'facile (Z1–Z2)', media: 'media (Z3, tempo)', dura: 'dura (soglia o più)'};
+const MAN_I = {facile: 'facile (Z1–Z2)', media: 'media (Z3, tempo)', dura: 'dura (soglia o più)', spec: 'dati specifici'};
+const MAN_F = [['km', 'Distanza', 'km', 0, 500, 0.1], ['dp', 'Dislivello positivo', 'm', 0, 10000, 1], ['dm', 'Dislivello negativo', 'm', 0, 10000, 1], ['wavg', 'Watt medi', 'W', 0, 2000, 1], ['np', 'Watt normalizzati', 'W', 0, 2000, 1], ['v', 'Velocità media', 'km/h', 0, 80, 0.1], ['cad', 'Cadenza media', 'rpm', 0, 200, 1], ['tss', 'TSS', '', 0, 1000, 1], ['hra', 'FC media', 'bpm', 30, 230, 1], ['hrm', 'FC massima', 'bpm', 30, 240, 1], ['kj', 'Energia', 'kJ', 0, 15000, 1]];
+function manTxt(m, ftp) {
+  const hTxt = m.h >= 1 ? fmtH(m.h) : Math.round(m.h * 60) + "'";
+  let t = `Tuo: ${hTxt} ${MAN_T[m.t].toLowerCase()}`;
+  if (m.i !== 'spec') return t + ` · ${MAN_I[m.i] || MAN_I.facile}` + (m.n ? ` · ${String(m.n).slice(0, 60)}` : '');
+  const x = m.sp || {}; const bits = [];
+  if (x.km) bits.push(`${num(x.km, 1)} km`); if (x.dp) bits.push(`${x.dp} m D+`);
+  if (x.wavg) bits.push(`${x.wavg} W medi` + (x.np ? ` (NP ${x.np})` : '')); else if (x.np) bits.push(`NP ${x.np} W`);
+  const ifv = manIF(m, ftp); if (ifv) bits.push(`IF ${num(ifv, 2)}` + (ifv >= 0.88 ? ' (soglia)' : ''));
+  const tss = manTSS(m, ftp); if (tss) bits.push(`TSS ${tss}`);
+  return t + (bits.length ? ' · ' + bits.join(' · ') : '') + (m.n ? ` · ${String(m.n).slice(0, 60)}` : '');
+}
+function manIF(m, ftp) { const x = m.sp || {}; const f = m.t === 'rulli' ? ftp.ftp_in : ftp.ftp_out; const w = x.np || x.wavg; return (m.t === 'rulli' || m.t === 'fuori') && w && f ? Math.round(w / f * 100) / 100 : null; }
+function manTSS(m, ftp) { const x = m.sp || {}; if (x.tss) return Math.round(x.tss); const i = manIF(m, ftp); return i ? Math.round(m.h * i * i * 100) : null; }
 const validOg = (o) => !!o && typeof o === 'object' && DOW.every((d) => typeof o[d] === 'number' && o[d] >= 0 && o[d] <= 8);
 function profilo(r) {
   const modalita = r.modalita === 'generico' ? 'generico' : 'evento';
@@ -878,7 +913,7 @@ function adattato(p, reg) {
     if (nAlt >= 2) extra.push('Due o più sedute alleggerite questa settimana: se la stanchezza continua, dormi di più, mangia di più e valuta di anticipare la settimana di scarico.');
     const MAN = md.man || {}; const man = {};
     if (!injured) DOW.forEach((d) => { const m = MAN[d]; if (!m || !MAN_T[m.t] || !(m.h > 0)) return; const bk = m.t === 'rulli' || m.t === 'fuori';
-      days[d] = `Tuo: ${m.h >= 1 ? fmtH(m.h) : Math.round(m.h * 60) + "'"} ${MAN_T[m.t].toLowerCase()} · ${MAN_I[m.i] || MAN_I.facile}` + (m.n ? ` · ${String(m.n).slice(0, 60)}` : '');
+      days[d] = manTxt(m, {ftp_in: +(memory.imp || {}).ftp_in || 240, ftp_out: +(memory.imp || {}).ftp_out || 260});
       if (bk) mins[d] = Math.round(m.h * 60); else delete mins[d]; man[d] = m; });
     const isLong = (t) => /^(Lungo|Gravel|PROVA|MTB)/.test(t);
     bike = 0; fz = 0; DOW.forEach((d) => { const t = days[d]; if (/^Forza/.test(t)) fz += /leggera|ultima/.test(t) ? 0.75 : 1; else if (mins[d]) bike += mins[d] / 60; else if (isLong(t)) bike += lungo; });
@@ -1222,8 +1257,8 @@ function renderAct(d, r) {
   const mkB = (label, cls, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ghost' + (cls ? ' ' + cls : ''); b.textContent = label; b.addEventListener('click', fn); box.appendChild(b); return b; };
   const badge = (t, cls) => { const s2 = document.createElement('span'); s2.className = 'badge' + (cls ? ' ' + cls : ''); s2.textContent = t; box.appendChild(s2); };
   const t = r.days[d]; const sk = r.skip[d];
-  if (r.man && r.man[d]) { badge('Allenamento tuo'); mkB('Modifica', '', () => manForm(d, r, box)); mkB('Togli', '', () => { const m = getMod(r); if (m.man) delete m.man[d]; if (m.skip[d] === 'altro') delete m.skip[d]; saveMod(); }); return; }
-  if (sk && sk !== 'auto') { badge('Saltato', 'sk'); mkB('Ripristina', '', () => { delete getMod(r).skip[d]; saveMod(); }); if (sk === 'tempo') mkB('Inserisci un allenamento tuo', '', () => manForm(d, r, box)); return; }
+  if (r.man && r.man[d]) { badge('Allenamento tuo'); mkB('Modifica', '', () => manForm(d, r)); mkB('Togli', '', () => { const m = getMod(r); if (m.man) delete m.man[d]; if (m.skip[d] === 'altro') delete m.skip[d]; saveMod(); }); return; }
+  if (sk && sk !== 'auto') { badge('Saltato', 'sk'); mkB('Ripristina', '', () => { delete getMod(r).skip[d]; saveMod(); }); if (sk === 'tempo') mkB('Inserisci un allenamento tuo', '', () => manForm(d, r)); return; }
   if (sk === 'auto') { badge('Riposo dopo infortunio', 'sk'); return; }
   if (r.orig[d]) { badge('Spostato da ' + GIORNI[r.orig[d]].toLowerCase()); mkB('Annulla spostamento', '', () => { const m = getMod(r); m.moves = m.moves.filter((x) => x.from !== d && x.to !== d); saveMod(); }); }
   const ALTL = {ridotta: 'Versione ridotta', z2: 'Solo Z2 facile', rec: 'Recupero attivo 45’', core: 'Solo core e mobilità', bici: 'Seduta in bici saltata'};
@@ -1253,22 +1288,55 @@ function renderAct(d, r) {
     box.replaceChildren(); const sel2 = document.createElement('select'); sel2.setAttribute('aria-label', 'Motivo');
     [['tempo', 'Mancanza di tempo'], ['altro', 'Faccio un allenamento mio'], ['infortunio', 'Infortunio o dolore'], ['malattia', 'Malattia']].forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; sel2.appendChild(o); });
     box.appendChild(sel2);
-    mkB('Conferma', 'danger', () => { if (sel2.value === 'altro') { manForm(d, r, box); return; } getMod(r).skip[d] = sel2.value; saveMod(); });
+    mkB('Conferma', 'danger', () => { if (sel2.value === 'altro') { renderAct(d, r); manForm(d, r); return; } getMod(r).skip[d] = sel2.value; saveMod(); });
     mkB('Annulla', '', () => renderAct(d, r));
   });
 }
-function manForm(d, r, box) {
-  box.replaceChildren(); const m0 = (r.man && r.man[d]) || {t: 'fuori', h: 1, i: 'facile', n: ''};
-  const mkSel = (opts, val, lab) => { const s2 = document.createElement('select'); s2.setAttribute('aria-label', lab); opts.forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; s2.appendChild(o); }); s2.value = String(val); box.appendChild(s2); return s2; };
-  const head = document.createElement('p'); head.className = 'muted'; head.style.cssText = 'flex-basis:100%;margin:0 0 4px'; head.textContent = 'Il tuo allenamento al posto di quello del piano:'; box.appendChild(head);
-  const st = mkSel(Object.keys(MAN_T).map((k) => [k, MAN_T[k]]), m0.t, 'Tipo');
-  const sh = mkSel(ORE_OPT.filter((h) => h > 0).concat(ORE_OPT.includes(m0.h) ? [] : [m0.h]).sort((a, c) => a - c).map((h) => [h, oreLbl(h)]), m0.h, 'Durata');
-  const si = mkSel(Object.keys(MAN_I).map((k) => [k, MAN_I[k][0].toUpperCase() + MAN_I[k].slice(1)]), m0.i, 'Intensità');
-  const tn = document.createElement('input'); tn.type = 'text'; tn.maxLength = 60; tn.placeholder = 'Nota (facoltativa), es. uscita di gruppo'; tn.value = m0.n || ''; tn.style.flexBasis = '100%'; box.appendChild(tn);
-  const b1 = document.createElement('button'); b1.type = 'button'; b1.className = 'btn'; b1.textContent = 'Salva'; box.appendChild(b1);
-  const b2 = document.createElement('button'); b2.type = 'button'; b2.className = 'btn ghost'; b2.textContent = 'Annulla'; box.appendChild(b2);
-  b1.addEventListener('click', () => { const m = getMod(r); m.man = m.man || {}; m.man[d] = {t: st.value, h: +sh.value, i: si.value, n: tn.value.trim()}; if (!m.skip[d]) m.skip[d] = 'altro'; saveMod(); });
-  b2.addEventListener('click', () => renderAct(d, r));
+function manForm(d, r) {
+  let ov = $('man-ov'); if (ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'man-ov'; ov.className = 'modal-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+  const card = document.createElement('div'); card.className = 'modal'; ov.appendChild(card);
+  const m0 = (r.man && r.man[d]) || {t: 'fuori', h: 1, i: 'facile', n: '', sp: {}}; const sp0 = m0.sp || {};
+  const dDay = iso(Date.parse(r.inizio) + DOW.indexOf(d) * DAY);
+  card.innerHTML = `<div class="modal-h"><b>Il tuo allenamento · ${GIORNI[d]} ${it(dDay).slice(0, 5)}</b><button type="button" class="modal-x" aria-label="Chiudi">×</button></div><div class="modal-b"></div><div class="modal-f"><p class="bad" id="man-err" hidden></p><div class="form"><button type="button" class="btn" id="man-save">Salva</button><button type="button" class="btn ghost" id="man-cancel">Annulla</button></div></div>`;
+  const body = card.querySelector('.modal-b');
+  const field = (label, el) => { const l = document.createElement('label'); l.className = 'field'; const sp = document.createElement('span'); sp.textContent = label; l.append(sp, el); body.appendChild(l); return el; };
+  const mkSel = (opts, val) => { const s2 = document.createElement('select'); opts.forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; s2.appendChild(o); }); s2.value = String(val); return s2; };
+  const st = field('Tipo', mkSel(Object.keys(MAN_T).map((k) => [k, MAN_T[k]]), m0.t));
+  const si = field('Intensità', mkSel(Object.keys(MAN_I).map((k) => [k, MAN_I[k][0].toUpperCase() + MAN_I[k].slice(1)]), m0.i));
+  const hOpts = ORE_OPT.filter((h) => h > 0); if (!hOpts.includes(m0.h)) { hOpts.push(m0.h); hOpts.sort((a2, c) => a2 - c); }
+  const sh = field('Durata', mkSel(hOpts.map((h) => [h, oreLbl(h)]), m0.h));
+  const spBox = document.createElement('div'); spBox.className = 'spbox'; body.appendChild(spBox);
+  const tw = document.createElement('div'); tw.className = 'field'; tw.innerHTML = '<span>Tempo in movimento</span>'; const trow = document.createElement('div'); trow.className = 'trow';
+  const mkNum = (ph, min, max, step, val) => { const i2 = document.createElement('input'); i2.type = 'number'; i2.inputMode = step < 1 ? 'decimal' : 'numeric'; i2.min = min; i2.max = max; i2.step = step; i2.placeholder = ph; if (val !== undefined && val !== null && val !== '') i2.value = val; return i2; };
+  const totMin = sp0.min || Math.round(m0.h * 60);
+  const ih = mkNum('ore', 0, 12, 1, m0.i === 'spec' ? Math.floor(totMin / 60) : ''), im = mkNum('min', 0, 59, 1, m0.i === 'spec' ? totMin % 60 : '');
+  const lh = document.createElement('span'); lh.textContent = 'h'; const lm = document.createElement('span'); lm.textContent = 'min';
+  trow.append(ih, lh, im, lm); tw.appendChild(trow); spBox.appendChild(tw);
+  const NUM = {}; const grid = document.createElement('div'); grid.className = 'spgrid'; spBox.appendChild(grid);
+  MAN_F.forEach(([k, lab, u, mn, mx, stp]) => { const l = document.createElement('label'); l.className = 'field'; const sp = document.createElement('span'); sp.textContent = lab + (u ? ` (${u})` : ''); const i2 = mkNum('—', mn, mx, stp, sp0[k]); l.append(sp, i2); grid.appendChild(l); NUM[k] = i2; });
+  const hint = document.createElement('p'); hint.className = 'muted'; hint.style.margin = '4px 0 0'; hint.textContent = 'Compila solo quello che hai: serve il tempo in movimento. Se non metti il TSS, lo calcolo dai watt normalizzati (o medi) e dal tuo FTP.'; spBox.appendChild(hint);
+  const tn = document.createElement('input'); tn.type = 'text'; tn.maxLength = 60; tn.placeholder = 'es. uscita di gruppo'; tn.value = m0.n || ''; field('Nota (facoltativa)', tn);
+  const sync = () => { const spec = si.value === 'spec'; spBox.hidden = !spec; sh.closest('label').hidden = spec; };
+  si.addEventListener('change', sync); sync();
+  const close = () => { ov.remove(); document.body.classList.remove('modal-open'); };
+  card.querySelector('.modal-x').addEventListener('click', close); card.querySelector('#man-cancel').addEventListener('click', close);
+  ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
+  card.querySelector('#man-save').addEventListener('click', () => {
+    const err = card.querySelector('#man-err'); err.hidden = true; card.querySelectorAll('.err').forEach((x) => x.classList.remove('err'));
+    const m = {t: st.value, i: si.value, n: tn.value.trim(), h: +sh.value};
+    if (m.i === 'spec') {
+      const hh = +ih.value || 0, mm = +im.value || 0; const bad = [];
+      if (!(hh * 60 + mm > 0) || hh > 12 || mm > 59 || hh < 0 || mm < 0) { bad.push('tempo in movimento'); ih.classList.add('err'); im.classList.add('err'); }
+      const sp = {min: hh * 60 + mm};
+      MAN_F.forEach(([k, lab, u, mn, mx]) => { const v = NUM[k].value.trim(); if (v === '') return; const x = +v.replace(',', '.'); if (isNaN(x) || x < mn || x > mx) { bad.push(lab); NUM[k].classList.add('err'); } else sp[k] = x; });
+      if (bad.length) { err.textContent = 'Controlla: ' + bad.join(', ') + '.'; err.hidden = false; return; }
+      m.sp = sp; m.h = Math.round(sp.min / 60 * 100) / 100;
+    }
+    const md = getMod(r); md.man = md.man || {}; md.man[d] = m; if (!md.skip[d]) md.skip[d] = 'altro'; close(); saveMod();
+  });
+  document.body.appendChild(ov); document.body.classList.add('modal-open');
+  setTimeout(() => { try { st.focus({preventScroll: true}); } catch (e) {} }, 50);
 }
 let alimDay = null;
 function dayKind(t, r) {
@@ -1619,7 +1687,10 @@ function fillDetails(d, raw, steps, r, f, target) {
   const h = (r.og || S.p.og)[d];
   if (/^Saltato/.test(raw)) { el('div', 'lbl', 'Cosa fare'); el('p', '', /infortunio|malattia/.test(raw) ? 'Fermati finché dolore o febbre non passano. Se durano più di qualche giorno, senti un medico o un fisioterapista prima di riprendere.' : 'Seduta saltata: non recuperarla nei giorni dopo, riprendi dal piano.'); return; }
   if (/^Riposo/.test(raw)) { el('div', 'lbl', 'Cosa fare'); el('p', '', h > 0 ? 'Giorno libero nel piano: se hai voglia, 20–30 minuti di camminata o mobilità.' : 'Riposo completo: dormi bene e mangia a sufficienza, è qui che il corpo si adatta.'); return; }
-  if (/^Tuo:/.test(raw)) { const m = (r.man || {})[d] || {}; el('div', 'lbl', 'Allenamento tuo'); el('p', '', (m.t === 'rulli' || m.t === 'fuori') ? 'Conta nelle ore in bici della settimana. Non ha file per Zwift o Garmin: tieni l’intensità che hai scelto e, se fai qualche tratto più duro, ricordati che domani conta.' : 'Non conta nelle ore in bici, ma stanca comunque: se è stato duro, il giorno dopo tienilo facile.'); el('p', 'muted', 'A fine settimana registra ore e fatica reali in «Com’è andata questa settimana»: il piano si adatta.'); return; }
+  if (/^Tuo:/.test(raw)) { const m = (r.man || {})[d] || {}; if (m.i === 'spec' && m.sp) { const x = m.sp, c = []; const add = (v, t) => { if (v !== undefined && v !== null && v !== '') c.push(t); };
+      add(x.min, `${Math.floor(x.min / 60)}h${String(x.min % 60).padStart(2, '0')} in movimento`); add(x.km, `${num(x.km, 1)} km`); add(x.dp, `${x.dp} m D+`); add(x.dm, `${x.dm} m D−`); add(x.wavg, `${x.wavg} W medi`); add(x.np, `NP ${x.np} W`); add(x.v, `${num(x.v, 1)} km/h`); add(x.cad, `${x.cad} rpm`);
+      const tss = manTSS(m, f); if (tss) c.push(`TSS ${tss}${x.tss ? '' : ' (stimato)'}`); add(x.hra, `FC media ${x.hra}`); add(x.hrm, `FC max ${x.hrm}`); add(x.kj, `${x.kj} kJ`); chips(c); }
+    el('div', 'lbl', 'Allenamento tuo'); el('p', '', (m.t === 'rulli' || m.t === 'fuori') ? (m.i === 'spec' ? 'Conta nelle ore in bici e nel carico della settimana con il TSS indicato o stimato.' : 'Conta nelle ore in bici della settimana. Non ha file per Zwift o Garmin: tieni l’intensità che hai scelto e, se fai qualche tratto più duro, ricordati che domani conta.') : 'Non conta nelle ore in bici, ma stanca comunque: se è stato duro, il giorno dopo tienilo facile.'); el('p', 'muted', 'A fine settimana registra ore e fatica reali in «Com’è andata questa settimana»: il piano si adatta.'); return; }
   if (/^Forza/.test(raw)) {
     chips(['≈ ' + (/leggera|ultima/.test(raw) ? "45'" : '1h'), 'Palestra']);
     el('div', 'lbl', 'Scopo'); el('p', '', 'Forza e stabilità per spingere sui pedali e reggere le ore in sella senza mal di schiena.');
