@@ -386,13 +386,14 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 .zwo-help .hl{margin:10px 0 2px}
 .dlstep{margin:0;font-weight:700;font-size:14px;color:var(--muted)}
 .dlopt:disabled{opacity:.45;cursor:default}
+.dlopt.dangeropt b{color:var(--bad)}
 </style>
 </head>
 <body>
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.37 · 28/11/2026)</p>
+<p class="ver" id="ver">(versione 1.38 · 28/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -709,7 +710,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.37 · 28/11/2026';
+const APP_VER = '1.38 · 28/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -1284,33 +1285,7 @@ function renderAct(d, r) {
   if (r.alt && r.alt[d]) { badge(/^bici/.test(r.alt[d]) && r.altFrom && r.altFrom[d] ? `Alternativa: recupero della bici di ${GIORNI[r.altFrom[d]].toLowerCase()}` : 'Alternativa: ' + ALTL[r.alt[d]].toLowerCase()); if (r.altOrig && r.altOrig[d]) { const o = document.createElement('p'); o.className = 'muted'; o.style.margin = '4px 0'; o.style.flexBasis = '100%'; o.textContent = 'Nel piano: ' + watts(r.altOrig[d], {ftp_in: +memory.imp.ftp_in, ftp_out: +memory.imp.ftp_out}); box.appendChild(o); } mkB('Torna alla seduta del piano', '', () => { delete getMod(r).alt[d]; saveMod(); }); return; }
   if (/^Riposo/.test(t)) return;
   if (FIT[d] && !/^(GARA|Tuo:)/.test(t)) mkB('Fatta? Importa i dati', 'donebtn', () => doneForm(d, r));
-  mkB('Sposta', '', () => {
-    box.replaceChildren(); const sel2 = document.createElement('select'); sel2.setAttribute('aria-label', 'Sposta in');
-    DOW.filter((x) => x !== d).forEach((x) => { const o = document.createElement('option'); o.value = x; o.textContent = GIORNI[x] + (/^Riposo/.test(r.days[x]) ? ' (libero)' : ' (scambia)'); sel2.appendChild(o); });
-    box.appendChild(sel2);
-    mkB('Conferma', '', () => { getMod(r).moves.push({from: d, to: sel2.value}); saveMod(); });
-    mkB('Annulla', '', () => renderAct(d, r));
-  });
-  if (!/^(GARA|Core|45' Z1)/.test(t)) mkB('Alternativa', '', () => {
-    box.replaceChildren(); const sel2 = document.createElement('select'); sel2.setAttribute('aria-label', 'Alternativa');
-    const opts = /^Forza/.test(t) ? (r.recBici || []).map((x) => 'bici:' + x).concat(['core']) : (/\d+×\d+['’]/.test(t) ? ['ridotta', 'z2', 'rec'] : ['z2', 'rec']);
-    const kindOf = (x) => /^(Lungo|Gravel|PROVA|MTB)/.test(x) ? 'il lungo' : (/TEST/.test(x) ? 'il test' : (/×/.test(x) ? 'le ripetute' : 'lo Z2'));
-    const pre = (x) => (r.altOrig && r.altOrig[x]) || '';
-    opts.forEach((v) => { const o = document.createElement('option'); o.value = v; o.textContent = /^bici:/.test(v) ? `Bici: recupera ${GIORNI[v.slice(5)].toLowerCase()}` : ALTL[v]; sel2.appendChild(o); });
-    box.appendChild(sel2);
-    const help = document.createElement('p'); help.className = 'muted'; help.style.margin = '6px 0 0'; help.style.flexBasis = '100%';
-    const HL = {ridotta: 'Stessi watt, circa il 40% di lavoro in meno.', z2: 'Niente intensità: Z2 tranquillo, al massimo 1h30 (2h se era il lungo).', rec: '45 minuti in Z1, gambe che girano.', core: '30 minuti di core e mobilità invece della palestra.', bici: `Al posto della palestra fai la seduta saltata ${(r.recBici || [])[0] ? GIORNI[r.recBici[0]].toLowerCase() : ''} (prima il lungo, poi le ripetute), nei limiti del tempo di questo giorno. La forza di questa settimana salta.`};
-    const upd = () => { const v = sel2.value; help.textContent = /^bici:/.test(v) ? `Al posto della palestra fai la seduta in bici saltata ${GIORNI[v.slice(5)].toLowerCase()}, nei limiti del tempo che hai oggi. Questa seduta di forza salta.` : HL[v]; }; sel2.addEventListener('change', upd); upd();
-    mkB('Conferma', '', () => { getMod(r).alt[d] = sel2.value; saveMod(); });
-    mkB('Annulla', '', () => renderAct(d, r)); box.appendChild(help);
-  });
-  mkB('Salta', 'danger', () => {
-    box.replaceChildren(); const sel2 = document.createElement('select'); sel2.setAttribute('aria-label', 'Motivo');
-    [['tempo', 'Mancanza di tempo'], ['altro', 'Faccio un allenamento mio'], ['infortunio', 'Infortunio o dolore'], ['malattia', 'Malattia']].forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; sel2.appendChild(o); });
-    box.appendChild(sel2);
-    mkB('Conferma', 'danger', () => { if (sel2.value === 'altro') { renderAct(d, r); manForm(d, r); return; } getMod(r).skip[d] = sel2.value; saveMod(); });
-    mkB('Annulla', '', () => renderAct(d, r));
-  });
+  mkB('Cambia la seduta', '', () => editForm(d, r));
 }
 
 async function unzipFit(buf) {
@@ -1452,6 +1427,53 @@ function doneForm(d, r) {
     const md = getMod(r); md.done = md.done || {}; md.done[d] = {sp, sc: res.sc, parts: res.parts, partial: !!res.partial, zona: !!pw || !!old.zona, pl: {min: pl.min, ifp: pl.ifp, tss: pl.tss}};
     close(); saveMod();
   });
+  document.body.appendChild(ov); document.body.classList.add('modal-open');
+}
+
+function editForm(d, r) {
+  const t = r.days[d]; let ov = $('man-ov'); if (ov) ov.remove();
+  ov = document.createElement('div'); ov.id = 'man-ov'; ov.className = 'modal-ov'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+  const dDay = iso(Date.parse(r.inizio) + DOW.indexOf(d) * DAY);
+  ov.innerHTML = `<div class="modal"><div class="modal-h"><b>${GIORNI[d]} ${it(dDay).slice(0, 5)}</b><button type="button" class="modal-x" aria-label="Chiudi">×</button></div><div class="modal-b"></div></div>`;
+  const body = ov.querySelector('.modal-b'); const close = () => { ov.remove(); document.body.classList.remove('modal-open'); };
+  const F = {ftp_in: +memory.imp.ftp_in, ftp_out: +memory.imp.ftp_out};
+  const hdr = (x) => { const h = document.createElement('p'); h.className = 'dlstep'; h.textContent = x; body.appendChild(h); };
+  const opt = (title, sub, fn, cls) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'dlopt' + (cls ? ' ' + cls : ''); b.innerHTML = '<b></b><span></span>'; b.querySelector('b').textContent = title; b.querySelector('span').textContent = sub; b.addEventListener('click', fn); body.appendChild(b); return b; };
+  const back = () => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ghost'; b.textContent = '‹ Indietro'; b.addEventListener('click', step1); body.appendChild(b); };
+  const apply = (fn) => { fn(getMod(r)); close(); saveMod(); };
+  const ALTL = {ridotta: 'Versione ridotta', z2: 'Solo Z2 facile', rec: 'Recupero attivo 45’', core: 'Solo core e mobilità'};
+  const HL = {ridotta: 'Stessi watt, circa il 40% di lavoro in meno.', z2: 'Niente intensità: Z2 tranquillo, al massimo 1h30 (2h se era il lungo).', rec: '45 minuti in Z1, gambe che girano.', core: '30 minuti di core e mobilità invece della palestra.'};
+  const canAlt = !/^(GARA|Core|45' Z1)/.test(t);
+  const step1 = () => {
+    body.replaceChildren(); const pp = document.createElement('p'); pp.className = 'muted'; pp.style.margin = '0'; pp.textContent = watts(t, F); body.appendChild(pp);
+    hdr('Cosa vuoi fare?');
+    opt('Sposta', 'In un altro giorno della settimana: se è occupato, le due sedute si scambiano.', stepMove);
+    if (canAlt) opt('Alternativa', /^Forza/.test(t) ? ((r.recBici || []).length ? 'Core e mobilità, oppure recupera una seduta in bici saltata.' : 'Core e mobilità al posto della palestra.') : 'Una versione più facile se sei stanco.', stepAlt);
+    opt('Salta', 'Per mancanza di tempo, infortunio, malattia o per fare un allenamento tuo.', stepSkip, 'dangeropt');
+  };
+  const stepMove = () => {
+    body.replaceChildren(); hdr('Sposta in…');
+    DOW.filter((x) => x !== d).forEach((x) => { const xd = iso(Date.parse(r.inizio) + DOW.indexOf(x) * DAY); const free = /^Riposo/.test(r.days[x]);
+      opt(`${GIORNI[x]} ${it(xd).slice(0, 5)}${free ? ' · libero' : ' · scambia'}`, free ? ((r.og || S.p.og)[x] > 0 ? 'Giorno libero nel piano' : 'Giorno senza tempo disponibile') : watts(r.days[x], F).replace(/ · .*$/, '').slice(0, 70), () => apply((m) => m.moves.push({from: d, to: x}))); });
+    back();
+  };
+  const stepAlt = () => {
+    body.replaceChildren(); hdr('Alternativa');
+    const opts = /^Forza/.test(t) ? (r.recBici || []).map((x) => 'bici:' + x).concat(['core']) : (/\d+×\d+['’]/.test(t) ? ['ridotta', 'z2', 'rec'] : ['z2', 'rec']);
+    opts.forEach((v) => { if (/^bici:/.test(v)) { const x = v.slice(5); opt(`Bici: recupera ${GIORNI[x].toLowerCase()}`, 'Al posto della palestra fai la seduta in bici saltata, nei limiti del tempo che hai oggi. Questa seduta di forza salta.', () => apply((m) => { m.alt[d] = v; })); }
+      else opt(ALTL[v], HL[v], () => apply((m) => { m.alt[d] = v; })); });
+    back();
+  };
+  const stepSkip = () => {
+    body.replaceChildren(); hdr('Perché la salti?');
+    opt('Mancanza di tempo', 'La seduta salta: puoi recuperarla al posto della palestra o inserire un allenamento tuo.', () => apply((m) => { m.skip[d] = 'tempo'; }), 'dangeropt');
+    opt('Faccio un allenamento mio', 'Inserisci tipo, durata e intensità, o importa il file .fit.', () => { close(); manForm(d, r); });
+    opt('Infortunio o dolore', 'Il resto della settimana diventa riposo e la prossima è di rientro.', () => apply((m) => { m.skip[d] = 'infortunio'; }), 'dangeropt');
+    opt('Malattia', 'Come per l’infortunio: riposo e poi settimana di rientro.', () => apply((m) => { m.skip[d] = 'malattia'; }), 'dangeropt');
+    back();
+  };
+  step1();
+  ov.querySelector('.modal-x').addEventListener('click', close); ov.addEventListener('click', (e) => { if (e.target === ov) close(); });
   document.body.appendChild(ov); document.body.classList.add('modal-open');
 }
 function manForm(d, r) {
