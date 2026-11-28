@@ -342,13 +342,15 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 #ogw-tag{font-size:13px}
 .hrow.past{opacity:.5}
 .small-link{margin-top:10px;padding:6px 12px;font-size:12.5px}
+.tpw{margin:12px 0 6px}
+#tp-n{font-size:13px}
 </style>
 </head>
 <body>
 <div class="tk">
 <header class="hero">
 <h1>WattPlan</h1>
-<p class="ver" id="ver">(versione 1.28 · 28/11/2026)</p>
+<p class="ver" id="ver">(versione 1.29 · 28/11/2026)</p>
 <p class="sub">Piano di allenamento ciclismo</p>
 <div class="card goal" id="welcome" hidden><h2>Benvenuto</h2><p>Il piano è vuoto: compila <b>Programma e obiettivo</b>, scegli se fare <b>forza in palestra</b>, inserisci il tuo <b>FTP</b> (fuori e sui rulli) e premi <b>Crea il piano</b> in fondo ai dati. Il piano, le sedute in watt e i file per Zwift e MyWhoosh si creano da soli.</p><p class="muted">Se non conosci il tuo FTP, fai prima un test di 20 minuti a tutta e usa il 95% della media in watt.</p></div>
 <p class="plan">Settimana <b id="h-n">—</b> di <span id="h-tot">—</span> · <span id="h-fase">—</span>: <span id="h-focus">—</span></p>
@@ -485,6 +487,14 @@ section > h2::before{box-shadow:0 2px 8px rgba(22,163,74,.5)}
 <div class="day" id="day-dom"><b>Domenica <span class="ddate" id="dd-dom"></span> <span id="dh-dom"></span></b><span id="d-dom">—</span><div class="pesobox" id="pz-dom" hidden></div><button type="button" class="btn ghost zwo" data-d="dom" hidden>Scarica .zwo</button><button type="button" class="btn ghost fitb" data-d="dom" hidden>Scarica .fit (Garmin, Karoo)</button><div class="act" id="act-dom"></div><details class="more"><summary>Dettagli</summary><div class="more-body" id="x-dom"></div></details></div>
 </div>
 <div class="daykey"><span><i style="background:linear-gradient(90deg,#ff5a1f,#ff9b3d)"></i>Qualità</span><span><i style="background:linear-gradient(90deg,#4f7cff,#00b8a9)"></i>Lungo</span><span><i style="background:#a259ff"></i>Forza</span><span><i style="background:#00b8a9"></i>Z2 e recupero</span><span><i style="background:var(--line)"></i>Riposo</span></div>
+<div class="tpw"><button type="button" class="btn" id="tp-week">Scarica la settimana per TrainingPeaks</button> <span class="muted" id="tp-n"></span></div>
+<details class="zwo-help"><summary>Come caricare la settimana su TrainingPeaks</summary><ul>
+<li>Il pulsante scarica un file .zip con un allenamento .zwo per ogni seduta in bici della settimana selezionata, lungo compreso. La forza non ha file.</li>
+<li>Apri lo .zip (su iPhone basta toccarlo nell’app File) e tieni i file .zwo.</li>
+<li>Su trainingpeaks.com, nella Workout Library, tocca ⋮ accanto a una cartella › <b>Import Workout</b> e seleziona tutti i file insieme.</li>
+<li>Poi trascina ogni allenamento sul suo giorno nel calendario: il nome inizia con giorno e data, per esempio «Mar 01/12».</li>
+<li>Le intensità sono in % dell’FTP: in TrainingPeaks imposta lo stesso FTP di WattPlan, altrimenti i watt non tornano.</li>
+</ul></details>
 <details class="zwo-help"><summary>Come caricare il file .zwo su Zwift o MyWhoosh</summary><ul>
 <li><b>Zwift</b>: da computer copia il file in Documenti › Zwift › Workouts › la cartella col tuo numero Zwift, poi riavvia Zwift: lo trovi in Allenamenti › Custom Workouts e si sincronizza anche su telefono, tablet e Apple TV.</li>
 <li><b>MyWhoosh</b>: apri workout.mywhoosh.com, accedi, carica il file e premi “Export to MyWhoosh”: compare nella cartella MyWorkout dell’app (se l’app era aperta, riavviala).</li>
@@ -659,7 +669,7 @@ const COLORS = ['#4f7cff','#00b8a9','#ffb020','#ff5a1f','#a259ff','#22c55e','#9a
 const DAY = 864e5;
 const DOW = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'];
 const KEY = 'piano-di-preparazione-v1';
-const APP_VER = '1.28 · 28/11/2026';
+const APP_VER = '1.29 · 28/11/2026';
 const DEF = {lungo:'sab',modalita:'evento',obiettivo_gen:'ftp',forza:true};
 
 let memory = {imp:{}, reg:{}, mod:{}};
@@ -1885,6 +1895,44 @@ $('ics-ore').addEventListener('click', () => {
   if (/github\.io$/.test(location.hostname)) { location.href = 'promemoria-ore.ics'; return; }
   if (typeof saveFile === 'function') saveFile('WattPlan-promemoria-ore.ics', new Blob([icsText('ore')], {type: 'text/calendar'}));
   else download('WattPlan-promemoria-ore.ics', icsText('ore'));
+});
+
+function zipStore(files) {
+  const T = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; T[n] = c >>> 0; }
+  const crc32 = (b) => { let c = 0xFFFFFFFF; for (let i = 0; i < b.length; i++) c = T[(c ^ b[i]) & 0xFF] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; };
+  const enc = new TextEncoder(); const parts = [], cen = []; let off = 0;
+  const u16 = (v) => [v & 255, (v >> 8) & 255], u32 = (v) => [v & 255, (v >> 8) & 255, (v >> 16) & 255, (v >>> 24) & 255];
+  const now = new Date(); const dt = ((now.getHours() << 11) | (now.getMinutes() << 5) | (now.getSeconds() >> 1)) & 0xFFFF, dd = (((now.getFullYear() - 1980) << 9) | ((now.getMonth() + 1) << 5) | now.getDate()) & 0xFFFF;
+  files.forEach((f) => {
+    const nm = enc.encode(f.name), data = typeof f.data === 'string' ? enc.encode(f.data) : f.data, c = crc32(data);
+    const loc = [].concat(u32(0x04034b50), u16(20), u16(0x0800), u16(0), u16(dt), u16(dd), u32(c), u32(data.length), u32(data.length), u16(nm.length), u16(0));
+    parts.push(new Uint8Array(loc), nm, data);
+    cen.push(new Uint8Array([].concat(u32(0x02014b50), u16(20), u16(20), u16(0x0800), u16(0), u16(dt), u16(dd), u32(c), u32(data.length), u32(data.length), u16(nm.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(off))), nm);
+    off += loc.length + nm.length + data.length;
+  });
+  const cenLen = cen.reduce((t, x) => t + x.length, 0);
+  const end = new Uint8Array([].concat(u32(0x06054b50), u16(0), u16(0), u16(files.length), u16(files.length), u32(cenLen), u32(off), u16(0)));
+  return new Blob(parts.concat(cen, [end]), {type: 'application/zip'});
+}
+function weekZwo() {
+  const r = row(); if (!r) return [];
+  const out = [];
+  DOW.forEach((d) => {
+    const dDay = iso(Date.parse(r.inizio) + DOW.indexOf(d) * DAY); const tag = `${GIORNI[d].slice(0, 3)} ${it(dDay).slice(0, 5)}`;
+    const fn = `${dDay}_${GIORNI[d].toLowerCase().replace('ì', 'i')}_S${String(r.n).padStart(2, '0')}.zwo`;
+    const raw = r.days[d];
+    if (ZWO[d]) { const z = ZWO[d]; out.push({name: fn, data: toZwo(z.steps, `${tag} · ${(watts(raw, S.ftp) || '').replace(/ · .*$/, '').slice(0, 60)}`, z.desc)}); }
+    else if (/^(Lungo|Gravel|PROVA|MTB)/.test(raw) && r.lungo_h > 0) out.push({name: fn, data: toZwo(longProf(raw, r.lungo_h), `${tag} · Lungo ${fmtH(r.lungo_h)}`, `WattPlan — ${GIORNI[d]} ${it(dDay)}: ${watts(raw, S.ftp)}. Uscita all’aperto: intensità in % dell’FTP (all’aperto ${S.ftp.ftp_out} W). Le salite sono a orari indicativi.`)});
+  });
+  return out;
+}
+function tpCount() { const n = S.configured && S.rows ? weekZwo().length : 0; $('tp-n').textContent = n ? `${n} allenamenti in bici` : 'nessun allenamento in bici questa settimana'; $('tp-week').disabled = !n; }
+{ const _r6 = render; render = function () { const x = _r6.apply(this, arguments); tpCount(); return x; }; const _s6 = select; select = function () { const x = _s6.apply(this, arguments); tpCount(); return x; }; if (S.configured) tpCount(); }
+$('tp-week').addEventListener('click', async () => {
+  const r = row(); const files = weekZwo(); if (!r || !files.length) return;
+  const name = `WattPlan-TrainingPeaks-S${String(r.n).padStart(2, '0')}-${r.inizio}.zip`; const blob = zipStore(files);
+  if (typeof saveFile === 'function') { await saveFile(name, blob); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
 });
 </script>
 <script>
